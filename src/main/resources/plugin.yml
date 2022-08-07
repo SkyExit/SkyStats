@@ -1,6 +1,10 @@
 name: SkyStats
 version: '${project.version}'
 main: de.laurinhummel.skystats.main.SkyStats
-api-version: 1.19
+api-version: 1.18
 authors: [ SkyExit ]
 description: A Minecraft statistics plugin
+
+commands:
+  stats:
+    description: Get some information about jour journey

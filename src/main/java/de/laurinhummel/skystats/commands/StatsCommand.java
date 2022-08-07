@@ -22,6 +22,8 @@ public class StatsCommand implements CommandExecutor {
             }
 
             menu.setItem(4, itemStacks.getPlayerHead(player));
+
+            player.openInventory(menu);
         }
         return false;
     }
