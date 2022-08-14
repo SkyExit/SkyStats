@@ -1,6 +1,6 @@
 package de.laurinhummel.skystats.commands;
 
-import de.laurinhummel.skystats.shortcuts.SkyStrings;
+import de.laurinhummel.skystats.misc.SkyStrings;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;

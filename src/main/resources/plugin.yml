@@ -8,3 +8,7 @@ description: A Minecraft statistics plugin
 commands:
   stats:
     description: Get some information about jour journey
+    usage: /stats
+  level:
+    description: See your Level on the server
+    usage: /level

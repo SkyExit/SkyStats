@@ -1,14 +1,14 @@
 package de.laurinhummel.skystats.main;
 
-import de.laurinhummel.skystats.shortcuts.SkyStrings;
-import org.bukkit.Bukkit;
+import de.laurinhummel.skystats.commands.LevelCommand;
+import de.laurinhummel.skystats.commands.StatsCommand;
+import de.laurinhummel.skystats.misc.SkyStrings;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 
 public final class SkyStats extends JavaPlugin {
@@ -24,6 +24,9 @@ public final class SkyStats extends JavaPlugin {
     public void onEnable() {
         System.out.println(SkyStrings.SKYSTATSCONSOLE + "Loading config file...");
         createCustomConfig();
+
+        getCommand("stats").setExecutor(new StatsCommand());
+        getCommand("level").setExecutor(new LevelCommand());
     }
 
     @Override

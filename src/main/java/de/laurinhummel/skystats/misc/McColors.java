@@ -1,4 +1,4 @@
-package de.laurinhummel.skystats.shortcuts;
+package de.laurinhummel.skystats.misc;
 
 public class McColors {
 
