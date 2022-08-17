@@ -1,5 +1,5 @@
 name: SkyStats
-version: '${project.version}'
+version: 0.1.6
 main: de.laurinhummel.skystats.main.SkyStats
 api-version: 1.18
 authors: [ SkyExit ]
@@ -12,3 +12,6 @@ commands:
   level:
     description: See your Level on the server
     usage: /level
+  skyify:
+    description: Skyify an item to start leveling it up!
+    usage: /skyify

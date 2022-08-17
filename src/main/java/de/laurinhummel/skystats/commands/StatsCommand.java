@@ -23,8 +23,9 @@ public class StatsCommand implements CommandExecutor {
 
             menu.setItem(4, statsItems.getPlayerHead(player));
 
-            menu.setItem(19, statsItems.getPlayTimeStatistics(player));
-            menu.setItem(20, statsItems.getCombatStatistics(player));
+            menu.setItem(21, statsItems.getPlayTimeStatistics(player));
+            menu.setItem(22, statsItems.getCombatStatistics(player));
+            menu.setItem(23, statsItems.getTravelStatistics(player));
 
             player.openInventory(menu);
         }

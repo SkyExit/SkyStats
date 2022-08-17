@@ -60,14 +60,71 @@ public class SkyStatsItems {
         assert combatStatisticsMeta != null;
         combatStatisticsMeta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
         combatStatisticsMeta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
-        combatStatisticsMeta.setDisplayName(McColors.AQUA + "Combat Statistics");
+        combatStatisticsMeta.addItemFlags(ItemFlag.HIDE_DESTROYS);
+        combatStatisticsMeta.setDisplayName(McColors.AQUA + "Combat Statistics"+ McColors.GRAY + " - "
+                + McColors.GREEN + "Total");
 
         ArrayList<String> combatStatisticsLore = new ArrayList<>();
-            combatStatisticsLore.add(McColors.GRAY + "Total damage dealt: " + McColors.GOLD + SkyDataFormatter.formatNumber(player.getStatistic(Statistic.DAMAGE_DEALT)));
-            combatStatisticsLore.add(McColors.GRAY + "Total damage taken: " + McColors.GOLD + SkyDataFormatter.formatNumber(player.getStatistic(Statistic.DAMAGE_TAKEN)));
-            combatStatisticsLore.add(McColors.GRAY + "Total player kills: " + McColors.GOLD + SkyDataFormatter.formatNumber(player.getStatistic(Statistic.PLAYER_KILLS)));
-            combatStatisticsLore.add(McColors.GRAY + "Total mob kills: " + McColors.GOLD + SkyDataFormatter.formatNumber(player.getStatistic(Statistic.MOB_KILLS)));
-            combatStatisticsLore.add(McColors.GRAY + "Total deaths: " + McColors.GOLD + SkyDataFormatter.formatNumber(player.getStatistic(Statistic.DEATHS)));
+            combatStatisticsLore.add(McColors.GRAY + "- damage dealt: " + McColors.GOLD + SkyDataFormatter.formatNumber(player.getStatistic(Statistic.DAMAGE_DEALT)));
+            combatStatisticsLore.add(McColors.GRAY + "- damage taken: " + McColors.GOLD + SkyDataFormatter.formatNumber(player.getStatistic(Statistic.DAMAGE_TAKEN)));
+            combatStatisticsLore.add(McColors.GRAY + "- player kills: " + McColors.GOLD + SkyDataFormatter.formatNumber(player.getStatistic(Statistic.PLAYER_KILLS)));
+            combatStatisticsLore.add(McColors.GRAY + "- mob kills: " + McColors.GOLD + SkyDataFormatter.formatNumber(player.getStatistic(Statistic.MOB_KILLS)));
+            combatStatisticsLore.add(McColors.GRAY + "- deaths: " + McColors.GOLD + SkyDataFormatter.formatNumber(player.getStatistic(Statistic.DEATHS)));
+
+        combatStatisticsMeta.setLore(combatStatisticsLore);
+        combatStatistics.setItemMeta(combatStatisticsMeta);
+
+        return combatStatistics;
+    }
+
+    public ItemStack getTravelStatistics(Player player) {
+        ItemStack travelStatistics = new ItemStack(Material.DIAMOND_BOOTS);
+        ItemMeta travelStatisticsMeta = travelStatistics.getItemMeta();
+        assert travelStatisticsMeta != null;
+        travelStatisticsMeta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
+        travelStatisticsMeta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
+        travelStatisticsMeta.addItemFlags(ItemFlag.HIDE_DESTROYS);
+        travelStatisticsMeta.setDisplayName(McColors.AQUA + "Travel Statistics" + McColors.GRAY + " - "
+                                            + McColors.GREEN + "Total distance");
+
+        ArrayList<String> travelStatisticsLore = new ArrayList<>();
+            travelStatisticsLore.add(McColors.GRAY + "- climbed: " + McColors.GOLD + SkyDataFormatter.formatNumberCM(player.getStatistic(Statistic.CLIMB_ONE_CM)));
+            travelStatisticsLore.add(McColors.GRAY + "- crouched: " + McColors.GOLD + SkyDataFormatter.formatNumberCM(player.getStatistic(Statistic.CROUCH_ONE_CM)));
+            travelStatisticsLore.add(McColors.GRAY + "- fallen: " + McColors.GOLD + SkyDataFormatter.formatNumberCM(player.getStatistic(Statistic.FALL_ONE_CM)));
+            travelStatisticsLore.add(McColors.GRAY + "- sprinted: " + McColors.GOLD + SkyDataFormatter.formatNumberCM(player.getStatistic(Statistic.SPRINT_ONE_CM)));
+            travelStatisticsLore.add(McColors.GRAY + "- swum: " + McColors.GOLD + SkyDataFormatter.formatNumberCM(player.getStatistic(Statistic.SWIM_ONE_CM)));
+            travelStatisticsLore.add(McColors.GRAY + "- walked: " + McColors.GOLD + SkyDataFormatter.formatNumberCM(player.getStatistic(Statistic.WALK_ONE_CM)));
+            travelStatisticsLore.add(McColors.GRAY + "- walked on water: " + McColors.GOLD + SkyDataFormatter.formatNumberCM(player.getStatistic(Statistic.WALK_ON_WATER_ONE_CM)));
+            travelStatisticsLore.add(McColors.GRAY + "- walked under water: " + McColors.GOLD + SkyDataFormatter.formatNumberCM(player.getStatistic(Statistic.WALK_UNDER_WATER_ONE_CM)));
+            travelStatisticsLore.add(McColors.GRAY + "- by boat: " + McColors.GOLD + SkyDataFormatter.formatNumberCM(player.getStatistic(Statistic.BOAT_ONE_CM)));
+            travelStatisticsLore.add(McColors.GRAY + "- by elytra: " + McColors.GOLD + SkyDataFormatter.formatNumberCM(player.getStatistic(Statistic.AVIATE_ONE_CM)));
+            travelStatisticsLore.add(McColors.GRAY + "- by horse: " + McColors.GOLD + SkyDataFormatter.formatNumberCM(player.getStatistic(Statistic.HORSE_ONE_CM)));
+            travelStatisticsLore.add(McColors.GRAY + "- by minecart: " + McColors.GOLD + SkyDataFormatter.formatNumberCM(player.getStatistic(Statistic.MINECART_ONE_CM)));
+            travelStatisticsLore.add(McColors.GRAY + "- by pig: " + McColors.GOLD + SkyDataFormatter.formatNumberCM(player.getStatistic(Statistic.PIG_ONE_CM)));
+            travelStatisticsLore.add(McColors.GRAY + "- by strider: " + McColors.GOLD + SkyDataFormatter.formatNumberCM(player.getStatistic(Statistic.STRIDER_ONE_CM)));
+
+        travelStatisticsMeta.setLore(travelStatisticsLore);
+        travelStatistics.setItemMeta(travelStatisticsMeta);
+
+        return travelStatistics;
+    }
+
+    public ItemStack getMiningStatistics(Player player) {
+        ItemStack combatStatistics = new ItemStack(Material.GOLDEN_PICKAXE);
+        ItemMeta combatStatisticsMeta = combatStatistics.getItemMeta();
+        assert combatStatisticsMeta != null;
+        combatStatisticsMeta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
+        combatStatisticsMeta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
+        combatStatisticsMeta.addItemFlags(ItemFlag.HIDE_DESTROYS);
+        combatStatisticsMeta.setDisplayName(McColors.AQUA + "Mining Statistics"+ McColors.GRAY + " - "
+                + McColors.GREEN + "Total");
+
+        ArrayList<String> combatStatisticsLore = new ArrayList<>();
+        combatStatisticsLore.add(McColors.GRAY + "- damage dealt: " + McColors.GOLD + SkyDataFormatter.formatNumber(player.getStatistic(Statistic.DAMAGE_DEALT)));
+        combatStatisticsLore.add(McColors.GRAY + "- damage taken: " + McColors.GOLD + SkyDataFormatter.formatNumber(player.getStatistic(Statistic.DAMAGE_TAKEN)));
+        combatStatisticsLore.add(McColors.GRAY + "- player kills: " + McColors.GOLD + SkyDataFormatter.formatNumber(player.getStatistic(Statistic.PLAYER_KILLS)));
+        combatStatisticsLore.add(McColors.GRAY + "- mob kills: " + McColors.GOLD + SkyDataFormatter.formatNumber(player.getStatistic(Statistic.MOB_KILLS)));
+        combatStatisticsLore.add(McColors.GRAY + "- deaths: " + McColors.GOLD + SkyDataFormatter.formatNumber(player.getStatistic(Statistic.DEATHS)));
 
         combatStatisticsMeta.setLore(combatStatisticsLore);
         combatStatistics.setItemMeta(combatStatisticsMeta);

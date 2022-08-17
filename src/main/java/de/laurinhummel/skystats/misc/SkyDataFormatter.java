@@ -4,7 +4,6 @@ import java.util.Locale;
 
 public class SkyDataFormatter {
     public static String formatTicks(long ticks) {
-
         int totalSecs = (int) (ticks / 20);
         int hours = totalSecs / 3600;
         int minutes = (totalSecs % 3600) / 60;
@@ -15,5 +14,9 @@ public class SkyDataFormatter {
 
     public static String formatNumber(long number) {
         return String.format(Locale.ENGLISH, "%,d", number);
+    }
+
+    public static String formatNumberCM(long number)  {
+        return String.format(Locale.ENGLISH, "%,d", number/100) + "m";
     }
 }
