@@ -13,7 +13,9 @@ public class StatsCommand implements CommandExecutor {
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if(sender instanceof Player) {
-            Player player = (Player) sender;
+            Player player = (args.length == 1) ? ((Bukkit.getPlayer(args[0]) != null) ? Bukkit.getPlayer(args[0])
+                    : (Player) sender) : (Player) sender;
+
             SkyStatsItems statsItems = new SkyStatsItems();
             Inventory menu = Bukkit.getServer().createInventory(player, 9 * 4, McColors.AQUA + "Sky" + McColors.GOLD + "Stats");
 

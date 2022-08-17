@@ -1,5 +1,6 @@
 package de.laurinhummel.skystats.misc;
 
+import de.laurinhummel.skystats.managers.StatisticsManager;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.Statistic;
@@ -24,11 +25,20 @@ public class SkyStatsItems {
         return placeholder;
     }
 
-    public ItemStack getPlayerHead(OfflinePlayer player) {
+    public ItemStack getPlayerHead(Player player) {
         final ItemStack head = new ItemStack(Material.PLAYER_HEAD);
         final SkullMeta meta = (SkullMeta) head.getItemMeta();
         assert meta != null;
         meta.setOwningPlayer(player);
+        meta.setDisplayName(McColors.AQUA + "Statistics for " + McColors.GOLD + player.getName());
+
+        StatisticsManager sm = new StatisticsManager(player);
+        ArrayList<String> headLore = new ArrayList<>();
+            headLore.add(McColors.GRAY + "PlayTime: " + McColors.GOLD + SkyDataFormatter.formatNumber(sm.getPlayTimeEXP()));
+            headLore.add(McColors.GRAY + "Combat: " + McColors.GOLD + SkyDataFormatter.formatNumber(sm.getCombatEXP()));
+            headLore.add(McColors.GRAY + "Travel: " + McColors.GOLD + SkyDataFormatter.formatNumber(sm.getTravelEXP()));
+
+        meta.setLore(headLore);
         head.setItemMeta(meta);
 
         return head;
@@ -120,8 +130,8 @@ public class SkyStatsItems {
                 + McColors.GREEN + "Total");
 
         ArrayList<String> combatStatisticsLore = new ArrayList<>();
-        combatStatisticsLore.add(McColors.GRAY + "- damage dealt: " + McColors.GOLD + SkyDataFormatter.formatNumber(player.getStatistic(Statistic.DAMAGE_DEALT)));
-        combatStatisticsLore.add(McColors.GRAY + "- damage taken: " + McColors.GOLD + SkyDataFormatter.formatNumber(player.getStatistic(Statistic.DAMAGE_TAKEN)));
+        combatStatisticsLore.add(McColors.GRAY + "- damage dealt: " + McColors.GOLD + SkyDataFormatter.formatNumber(player.getStatistic(Statistic.MINE_BLOCK)));
+        combatStatisticsLore.add(McColors.GRAY + "- damage taken: " + McColors.GOLD + SkyDataFormatter.formatNumber(player.getStatistic(Statistic.INTERACT_WITH_ANVIL)));
         combatStatisticsLore.add(McColors.GRAY + "- player kills: " + McColors.GOLD + SkyDataFormatter.formatNumber(player.getStatistic(Statistic.PLAYER_KILLS)));
         combatStatisticsLore.add(McColors.GRAY + "- mob kills: " + McColors.GOLD + SkyDataFormatter.formatNumber(player.getStatistic(Statistic.MOB_KILLS)));
         combatStatisticsLore.add(McColors.GRAY + "- deaths: " + McColors.GOLD + SkyDataFormatter.formatNumber(player.getStatistic(Statistic.DEATHS)));
