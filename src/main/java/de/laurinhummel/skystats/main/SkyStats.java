@@ -40,10 +40,10 @@ public final class SkyStats extends JavaPlugin {
 
         getCommand("stats").setExecutor(new StatsCommand());
         getCommand("level").setExecutor(new LevelCommand());
-        getCommand("skyify").setExecutor(new SkyifyCommand());
+        //getCommand("skyify").setExecutor(new SkyifyCommand());
 
         pluginManager.registerEvents((Listener)new StopStatsInvItemMovement(), (Plugin) this);
-        pluginManager.registerEvents((Listener) new StopSkyifiedItemsAnvilUsage(), (Plugin) this);
+        //pluginManager.registerEvents((Listener) new StopSkyifiedItemsAnvilUsage(), (Plugin) this);
     }
 
     @Override

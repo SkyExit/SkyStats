@@ -1,10 +1,14 @@
 package de.laurinhummel.skystats.managers;
 
+import de.laurinhummel.skystats.misc.McColors;
 import de.laurinhummel.skystats.misc.SkyDataFormatter;
 import org.bukkit.Statistic;
 import org.bukkit.entity.Player;
 
 public class StatisticsManager {
+    private enum SkyStatistics {
+        BLOCK_PLACE
+    }
     private Player player;
     public StatisticsManager(Player player) {
         this.player = player;
@@ -31,5 +35,24 @@ public class StatisticsManager {
                 + g(Statistic.DAMAGE_TAKEN) / 7
                 + g(Statistic.PLAYER_KILLS) * 10
                 + g(Statistic.MOB_KILLS) * 4;
+    }
+
+    public int getInteractionEXP() {
+        return (g(Statistic.CRAFTING_TABLE_INTERACTION) * 5
+                + g(Statistic.FURNACE_INTERACTION) * 10
+                + g(Statistic.INTERACT_WITH_CAMPFIRE) * 7
+                + g(Statistic.INTERACT_WITH_ANVIL) * 10
+                + g(Statistic.INTERACT_WITH_BLAST_FURNACE) * 10
+                + g(Statistic.INTERACT_WITH_SMOKER) * 10
+                + g(Statistic.INTERACT_WITH_STONECUTTER) * 10
+                + g(Statistic.BEACON_INTERACTION) * 20
+                + g(Statistic.BREWINGSTAND_INTERACTION) * 10) * 10;
+    }
+
+    public int getTotalEXP() {
+        return getTravelEXP()
+                + getPlayTimeEXP()
+                + getCombatEXP()
+                + getInteractionEXP();
     }
 }
