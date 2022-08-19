@@ -44,8 +44,8 @@ public class ItemsManager {
             headLore.add(McColors.GRAY + "Interaction EXP: " + McColors.GOLD + SkyDataFormatter.formatNumber(sm.getInteractionEXP()));
             headLore.add(McColors.GRAY + "--> Total EXP: " + McColors.GOLD + SkyDataFormatter.formatNumber(sm.getTotalEXP()));
             headLore.add("");
-            headLore.add(level.getMinEXP() + " / " + level.getMaxEXP() + " : " + level.getLevel());
-            headLore.add(level.getLevelDuration() + " : " + level.getLevelProgress() + " : " + level.getPercentage() + "%");
+            headLore.add(level.getProgressBar(15));
+            headLore.add(level.getProgressBarUnderline());
 
         meta.setLore(headLore);
         head.setItemMeta(meta);

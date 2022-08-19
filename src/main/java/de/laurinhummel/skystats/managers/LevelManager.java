@@ -24,6 +24,6 @@ public class LevelManager {
             else { break; }
         }
 
-        return new Level(level, new LevelBorder(min, max), sm.getTotalEXP());
+        return new Level(level, min, max, sm.getTotalEXP());
     }
 }
