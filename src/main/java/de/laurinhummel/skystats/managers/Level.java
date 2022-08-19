@@ -17,7 +17,7 @@ public class Level {
         level = 1;
         totalEXP = sm.getTotalEXP();
 
-        for(int i = 0; min < totalEXP; i++) {
+        for(int i = 0; max < totalEXP; i++) {
             min = min + 200 + (i * 20);
             max = (min + 200 + (i * 20)) - 1;
             if(max < totalEXP) { level = i-1; }
