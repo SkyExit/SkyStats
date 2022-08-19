@@ -4,16 +4,25 @@ import de.laurinhummel.skystats.misc.McColors;
 import org.bukkit.entity.Player;
 
 public class Level {
-    private int level;
-    private int min;
-    private int max;
-    private int totalEXP;
+    private static int level;
+    private static int min;
+    private static int max;
+    private static int totalEXP;
 
-    public Level(int level, int min, int max, int totalEXP) {
-        this.level = level;
-        this.min = min;
-        this.max = max;
-        this.totalEXP = totalEXP;
+    public Level(Player player) {
+        StatisticsManager sm = new StatisticsManager(player);
+
+        min = 0;
+        max = 220;
+        level = 1;
+        totalEXP = sm.getTotalEXP();
+
+        for(int i = 0; min < totalEXP; i++) {
+            min = min + 200 + (i * 20);
+            max = (min + 200 + (i * 20)) - 1;
+            if(max < totalEXP) { level = i-1; }
+            else { break; }
+        }
     }
 
     public int getLevel() {
@@ -48,6 +57,6 @@ public class Level {
 
     public String getProgressBarUnderline() {
         return McColors.GREEN + "Level: " + getLevel()
-                + McColors.BLUE + "(" + getMinEXP() + " - " + getMaxEXP() + ")";
+                + McColors.BLUE + " (" + getMinEXP() + " <-> " + getMaxEXP() + ")";
     }
 }

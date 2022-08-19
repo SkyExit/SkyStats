@@ -35,7 +35,7 @@ public class ItemsManager {
         meta.setDisplayName(McColors.AQUA + "Statistics for " + McColors.GOLD + player.getName());
 
         StatisticsManager sm = new StatisticsManager(player);
-        Level level = new LevelManager(player).getPlayerLevel();
+        Level level = new Level(player);
 
         ArrayList<String> headLore = new ArrayList<>();
             headLore.add(McColors.GRAY + "PlayTime EXP: " + McColors.GOLD + SkyDataFormatter.formatNumber(sm.getPlayTimeEXP()));
