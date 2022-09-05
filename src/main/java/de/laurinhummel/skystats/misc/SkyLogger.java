@@ -2,8 +2,20 @@ package de.laurinhummel.skystats.misc;
 
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
 
 public class SkyLogger {
+    public enum LogType {
+        INFO(McColors.AQUA),
+        WARNING(McColors.GOLD),
+        ERROR(McColors.RED);
+
+        private final String color;
+        LogType(String color) {
+            this.color = color;
+        }
+    }
+
     public static void sendMessage(CommandSender receiver, String message) {
         receiver.sendMessage(message);
     }
@@ -13,6 +25,10 @@ public class SkyLogger {
     }
 
     public static void sendConsole(String message) {
-        sendPrefixMessage((CommandSender)Bukkit.getConsoleSender(), message);
+        sendPrefixMessage(Bukkit.getConsoleSender(), message);
+    }
+
+    public static void sendPlayer(Player player, String message, LogType type) {
+        player.sendMessage(SkyStrings.SKYSTATS + type.color + message);
     }
 }

@@ -1,15 +1,11 @@
 package de.laurinhummel.skystats.managers;
 
-import de.laurinhummel.skystats.misc.McColors;
 import de.laurinhummel.skystats.misc.SkyDataFormatter;
 import org.bukkit.Statistic;
 import org.bukkit.entity.Player;
 
 public class StatisticsManager {
-    private enum SkyStatistics {
-        BLOCK_PLACE
-    }
-    private Player player;
+    private final Player player;
     public StatisticsManager(Player player) {
         this.player = player;
     }
@@ -20,6 +16,7 @@ public class StatisticsManager {
                         + g(Statistic.CROUCH_ONE_CM) / 1.3
                         + g(Statistic.FALL_ONE_CM) / 10.0
                         + g(Statistic.SPRINT_ONE_CM) / 5.6
+                        + g(Statistic.FLY_ONE_CM) / 5.8
                         + g(Statistic.SWIM_ONE_CM) / 2.2
                         + g(Statistic.WALK_ONE_CM) / 4.3
                         + g(Statistic.BOAT_ONE_CM) / 8.0

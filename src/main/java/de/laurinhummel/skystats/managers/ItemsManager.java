@@ -35,7 +35,7 @@ public class ItemsManager {
         meta.setDisplayName(McColors.AQUA + "Statistics for " + McColors.GOLD + player.getName());
 
         StatisticsManager sm = new StatisticsManager(player);
-        Level level = new Level(player);
+        LevelManager level = new LevelManager(player);
 
         ArrayList<String> headLore = new ArrayList<>();
             headLore.add(McColors.GRAY + "PlayTime EXP: " + McColors.GOLD + SkyDataFormatter.formatNumber(sm.getPlayTimeEXP()));
@@ -59,13 +59,14 @@ public class ItemsManager {
         assert playTimeStatisticsMeta != null;
         playTimeStatisticsMeta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
         playTimeStatisticsMeta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
-        playTimeStatisticsMeta.setDisplayName(McColors.AQUA + "Play Time Statistics");
+        playTimeStatisticsMeta.setDisplayName(McColors.AQUA + "Play Time Statistics" + " - "
+                + McColors.GREEN + "Total time");
 
         ArrayList<String> playTimeStatisticsLore = new ArrayList<>();
-        playTimeStatisticsLore.add(McColors.GRAY + "Total world time: " + McColors.GOLD + SkyDataFormatter.formatTicks(player.getStatistic(Statistic.TOTAL_WORLD_TIME)));
-        playTimeStatisticsLore.add(McColors.GRAY + "Time since last death: " + McColors.GOLD + SkyDataFormatter.formatTicks(player.getStatistic(Statistic.TIME_SINCE_DEATH)));
-        playTimeStatisticsLore.add(McColors.GRAY + "Time since last rest: " + McColors.GOLD + SkyDataFormatter.formatTicks(player.getStatistic(Statistic.TIME_SINCE_REST)));
-        playTimeStatisticsLore.add(McColors.GRAY + "Total time sneaked: " + McColors.GOLD + SkyDataFormatter.formatTicks(player.getStatistic(Statistic.SNEAK_TIME)));
+        playTimeStatisticsLore.add(McColors.GRAY + "- in the world : " + McColors.GOLD + SkyDataFormatter.formatTicks(player.getStatistic(Statistic.TOTAL_WORLD_TIME)));
+        playTimeStatisticsLore.add(McColors.GRAY + "- since last death: " + McColors.GOLD + SkyDataFormatter.formatTicks(player.getStatistic(Statistic.TIME_SINCE_DEATH)));
+        playTimeStatisticsLore.add(McColors.GRAY + "- since last rest: " + McColors.GOLD + SkyDataFormatter.formatTicks(player.getStatistic(Statistic.TIME_SINCE_REST)));
+        playTimeStatisticsLore.add(McColors.GRAY + "- sneaked: " + McColors.GOLD + SkyDataFormatter.formatTicks(player.getStatistic(Statistic.SNEAK_TIME)));
 
         playTimeStatisticsMeta.setLore(playTimeStatisticsLore);
         playTimeStatistics.setItemMeta(playTimeStatisticsMeta);
@@ -111,6 +112,7 @@ public class ItemsManager {
         travelStatisticsLore.add(McColors.GRAY + "- crouched: " + McColors.GOLD + SkyDataFormatter.formatNumberCM(player.getStatistic(Statistic.CROUCH_ONE_CM)));
         travelStatisticsLore.add(McColors.GRAY + "- fallen: " + McColors.GOLD + SkyDataFormatter.formatNumberCM(player.getStatistic(Statistic.FALL_ONE_CM)));
         travelStatisticsLore.add(McColors.GRAY + "- sprinted: " + McColors.GOLD + SkyDataFormatter.formatNumberCM(player.getStatistic(Statistic.SPRINT_ONE_CM)));
+        travelStatisticsLore.add(McColors.GRAY + "- flown: " + McColors.GOLD + SkyDataFormatter.formatNumberCM(player.getStatistic(Statistic.FLY_ONE_CM)));
         travelStatisticsLore.add(McColors.GRAY + "- swum: " + McColors.GOLD + SkyDataFormatter.formatNumberCM(player.getStatistic(Statistic.SWIM_ONE_CM)));
         travelStatisticsLore.add(McColors.GRAY + "- walked: " + McColors.GOLD + SkyDataFormatter.formatNumberCM(player.getStatistic(Statistic.WALK_ONE_CM)));
         travelStatisticsLore.add(McColors.GRAY + "- walked on water: " + McColors.GOLD + SkyDataFormatter.formatNumberCM(player.getStatistic(Statistic.WALK_ON_WATER_ONE_CM)));

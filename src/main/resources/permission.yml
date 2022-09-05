@@ -1,0 +1,9 @@
+Groups:
+  Player: SkyExit
+  Admin: Admin
+Permissions:
+  Level: Player
+  Skyify: Admin
+  Stats: Player
+  Workbench: Player
+  Enderchest: Player

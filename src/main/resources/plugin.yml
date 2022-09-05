@@ -12,6 +12,11 @@ commands:
   level:
     description: See your Level on the server
     usage: /level
-  skyify:
-    description: Skyify an item to start leveling it up!
-    usage: /skyify
+  workbench:
+    description: Open a workbench
+    usage: /workbench
+    aliases: [ wb ]
+  enderchest:
+    description: Open your enderchest
+    usage: /enderchest
+    aliases: [ ec ]

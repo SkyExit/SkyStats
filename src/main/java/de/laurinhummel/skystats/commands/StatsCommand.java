@@ -2,6 +2,7 @@ package de.laurinhummel.skystats.commands;
 
 import de.laurinhummel.skystats.misc.McColors;
 import de.laurinhummel.skystats.managers.ItemsManager;
+import de.laurinhummel.skystats.misc.SkyLogger;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -31,22 +32,7 @@ public class StatsCommand implements CommandExecutor {
             menu.setItem(31, itemsManager.getInteractionStatistics());
 
             player.openInventory(menu);
-        } else {
-            /*
-            OfflinePlayer player = Bukkit.getOfflinePlayer("SkyExit");
-            StatisticsManager sm = new StatisticsManager((Player) player);
-            LevelBorder levelBorder = new LevelBorder(sm.getPlayerLevel());
-
-            SkyLogger.sendConsole("--------------" + McColors.AQUA + "Statistics for " + McColors.GOLD + "SkyExit" +
-                    McColors.RESET + "--------------");
-            SkyLogger.sendConsole(McColors.GRAY + "PlayTime EXP: " + McColors.GOLD + SkyDataFormatter.formatNumber(sm.getPlayTimeEXP()));
-            SkyLogger.sendConsole(McColors.GRAY + "Combat EXP: " + McColors.GOLD + SkyDataFormatter.formatNumber(sm.getCombatEXP()));
-            SkyLogger.sendConsole(McColors.GRAY + "Travel EXP: " + McColors.GOLD + SkyDataFormatter.formatNumber(sm.getTravelEXP()));
-            SkyLogger.sendConsole(McColors.GRAY + "Interaction EXP: " + McColors.GOLD + SkyDataFormatter.formatNumber(sm.getInteractionEXP()));
-            SkyLogger.sendConsole(levelBorder.getMin() + " / " + levelBorder.getMax());
-
-             */
-        }
+        } else { SkyLogger.sendConsole("You can't open the stats menu in the console!"); }
         return true;
     }
 }

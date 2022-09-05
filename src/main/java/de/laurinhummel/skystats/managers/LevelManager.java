@@ -3,13 +3,13 @@ package de.laurinhummel.skystats.managers;
 import de.laurinhummel.skystats.misc.McColors;
 import org.bukkit.entity.Player;
 
-public class Level {
+public class LevelManager {
     private static int level;
     private static int min;
     private static int max;
     private static int totalEXP;
 
-    public Level(Player player) {
+    public LevelManager(Player player) {
         StatisticsManager sm = new StatisticsManager(player);
 
         min = 0;
@@ -20,7 +20,7 @@ public class Level {
         for(int i = 0; max < totalEXP; i++) {
             min = min + 200 + (i * 20);
             max = (min + 200 + (i * 20)) - 1;
-            if(max < totalEXP) { level = i-1; }
+            if(max < totalEXP) { level = i; }
             else { break; }
         }
     }
