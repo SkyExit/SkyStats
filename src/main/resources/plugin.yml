@@ -20,3 +20,6 @@ commands:
     description: Open your enderchest
     usage: /enderchest
     aliases: [ ec ]
+  skyify:
+    description: Skyify an Item
+    usage: /skyify

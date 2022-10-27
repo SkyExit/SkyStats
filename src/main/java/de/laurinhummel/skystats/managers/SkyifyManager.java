@@ -8,6 +8,8 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
 import java.util.ArrayList;
+import java.util.Locale;
+import java.util.Objects;
 
 public class SkyifyManager {
     public enum ITEMTYPE {
@@ -28,18 +30,19 @@ public class SkyifyManager {
     private ItemStack itemStack;
     private int level;
 
-    public SkyifyManager(ItemStack itemStack, int lvl) {
+    public SkyifyManager(ItemStack itemStack) {
         this.itemStack = itemStack;
-        this.level = lvl;
     }
 
-    public ItemMeta getSkyifyMeta() {
+    public ItemMeta getDefaultSkyifyMeta() {
         ItemMeta itemMeta = itemStack.getItemMeta();
-            itemMeta.setDisplayName(McColors.GOLD + "Lvl. 1 " + McColors.RESET + "- " + McColors.AQUA + itemStack.getType().toString().replace("_", " ").toLowerCase());
+        assert itemMeta != null;
+            itemMeta.setDisplayName(McColors.GOLD + "Lvl. 1 " + McColors.RESET + "- " + McColors.AQUA + itemStack.getType().toString().replace("_", " ").toUpperCase(Locale.ENGLISH));
             itemMeta.setUnbreakable(true);
             itemMeta.addEnchant(Enchantment.MENDING, 2, true);
             itemMeta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
             itemMeta.addItemFlags(ItemFlag.HIDE_UNBREAKABLE);
+            itemMeta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
 
         ArrayList<String> lore = new ArrayList<>();
             lore.add(0, "test");
@@ -49,5 +52,20 @@ public class SkyifyManager {
         itemMeta.setLore(lore);
 
         return itemMeta;
+    }
+
+    public int getLevel() {
+        ItemMeta itemMeta = itemStack.getItemMeta();
+        String[] metaString = itemMeta.toString().split(" ");
+        return Integer.parseInt(metaString[1]);
+    }
+
+    public boolean isSkyify() {
+        if(itemStack.hasItemMeta() && Objects.requireNonNull(itemStack.getItemMeta()).getLore() != null) {
+            if(itemStack.getItemMeta().getLore().toString().contains("SKYIF")) {
+                return true;
+            }
+        }
+        return false;
     }
 }

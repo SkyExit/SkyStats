@@ -1,9 +1,7 @@
 package de.laurinhummel.skystats.main;
 
-import de.laurinhummel.skystats.commands.EnderchestCommand;
-import de.laurinhummel.skystats.commands.LevelCommand;
-import de.laurinhummel.skystats.commands.StatsCommand;
-import de.laurinhummel.skystats.commands.WorkbenchCommand;
+import de.laurinhummel.skystats.commands.*;
+import de.laurinhummel.skystats.listeners.StopSkyifiedItemsAnvilUsage;
 import de.laurinhummel.skystats.listeners.StopStatsInvItemMovement;
 import de.laurinhummel.skystats.misc.SkyLogger;
 import org.bukkit.Bukkit;
@@ -42,12 +40,10 @@ public final class SkyStats extends JavaPlugin {
             getCommand("level").setExecutor(new LevelCommand());
             getCommand("workbench").setExecutor(new WorkbenchCommand());
             getCommand("enderchest").setExecutor(new EnderchestCommand());
-            //getCommand("skyify").setExecutor(new SkyifyCommand());
-
-
+            getCommand("skyify").setExecutor(new SkyifyCommand());
 
         pluginManager.registerEvents((Listener)new StopStatsInvItemMovement(), this);
-        //pluginManager.registerEvents((Listener) new StopSkyifiedItemsAnvilUsage(), (Plugin) this);
+        pluginManager.registerEvents((Listener) new StopSkyifiedItemsAnvilUsage(), (Plugin) this);
     }
 
     @Override

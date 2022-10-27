@@ -19,7 +19,7 @@ public class SkyifyCommand implements CommandExecutor {
             Player player = (Player) sender;
             ItemStack item = player.getInventory().getItemInMainHand();
                 if(!EnchantmentTarget.TOOL.includes(item)) { player.sendMessage("no"); return true; }
-            item.setItemMeta(new SkyifyManager(item, 1).getSkyifyMeta());
+            item.setItemMeta(new SkyifyManager(item).getDefaultSkyifyMeta());
             player.getInventory().setItemInMainHand(item);
         }
         return false;
