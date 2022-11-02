@@ -1,5 +1,5 @@
 name: SkyStats
-version: 0.2.8
+version: 0.3.3
 main: de.laurinhummel.skystats.main.SkyStats
 api-version: 1.18
 authors: [ SkyExit ]
@@ -12,6 +12,7 @@ commands:
   level:
     description: See your Level on the server
     usage: /level
+    aliases: [ lvl ]
   workbench:
     description: Open a workbench
     usage: /workbench

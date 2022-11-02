@@ -22,6 +22,6 @@ public class SkyifyCommand implements CommandExecutor {
             item.setItemMeta(new SkyifyManager(item).getDefaultSkyifyMeta());
             player.getInventory().setItemInMainHand(item);
         }
-        return false;
+        return true;
     }
 }
