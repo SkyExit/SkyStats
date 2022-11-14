@@ -1,5 +1,5 @@
 name: SkyStats
-version: 0.3.3
+version: 0.3.4
 main: de.laurinhummel.skystats.main.SkyStats
 api-version: 1.18
 authors: [ SkyExit ]

@@ -1,6 +1,7 @@
 package de.laurinhummel.skystats.main;
 
 import de.laurinhummel.skystats.commands.*;
+import de.laurinhummel.skystats.listeners.PlayerDeathListener;
 import de.laurinhummel.skystats.listeners.StopSkyifiedItemsAnvilUsage;
 import de.laurinhummel.skystats.listeners.StopStatsInvItemMovement;
 import de.laurinhummel.skystats.misc.SkyLogger;
@@ -43,7 +44,8 @@ public final class SkyStats extends JavaPlugin {
             getCommand("skyify").setExecutor(new SkyifyCommand());
 
         pluginManager.registerEvents((Listener)new StopStatsInvItemMovement(), this);
-        pluginManager.registerEvents((Listener) new StopSkyifiedItemsAnvilUsage(), (Plugin) this);
+        pluginManager.registerEvents((Listener) new StopSkyifiedItemsAnvilUsage(), this);
+        pluginManager.registerEvents((Listener) new PlayerDeathListener(), this);
     }
 
     @Override
