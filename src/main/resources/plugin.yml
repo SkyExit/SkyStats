@@ -1,5 +1,5 @@
 name: SkyStats
-version: 0.3.4
+version: 0.4.1
 main: de.laurinhummel.skystats.main.SkyStats
 api-version: 1.18
 authors: [ SkyExit ]
@@ -24,3 +24,6 @@ commands:
   skyify:
     description: Skyify an Item
     usage: /skyify
+  compass:
+    description: Sets a compass location
+    usage: /compass [X] [Z]

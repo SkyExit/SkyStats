@@ -42,6 +42,7 @@ public final class SkyStats extends JavaPlugin {
             getCommand("workbench").setExecutor(new WorkbenchCommand());
             getCommand("enderchest").setExecutor(new EnderchestCommand());
             getCommand("skyify").setExecutor(new SkyifyCommand());
+            getCommand("compass").setExecutor(new CompassCommand());
 
         pluginManager.registerEvents((Listener)new StopStatsInvItemMovement(), this);
         pluginManager.registerEvents((Listener) new StopSkyifiedItemsAnvilUsage(), this);
