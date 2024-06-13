@@ -13,17 +13,6 @@ commands:
     description: See your Level on the server
     usage: /level
     aliases: [ lvl ]
-  workbench:
-    description: Open a workbench
-    usage: /workbench
-    aliases: [ wb ]
-  enderchest:
-    description: Open your enderchest
-    usage: /enderchest
-    aliases: [ ec ]
   skyify:
     description: Skyify an Item
     usage: /skyify
-  compass:
-    description: Sets a compass location
-    usage: /compass [X] [Z]

@@ -11,6 +11,7 @@ public class StatisticsManager {
     }
 
     private int g(Statistic statistic) { return player.getStatistic(statistic); }
+
     public int getTravelEXP() {
         return (int) ((g(Statistic.CLIMB_ONE_CM) / 2.5
                         + g(Statistic.CROUCH_ONE_CM) / 1.3
