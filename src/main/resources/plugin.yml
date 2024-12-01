@@ -1,5 +1,5 @@
 name: SkyStats
-version: 0.4.1
+version: ${version}
 main: de.laurinhummel.skystats.main.SkyStats
 api-version: 1.18
 authors: [ SkyExit ]
@@ -13,6 +13,6 @@ commands:
     description: See your Level on the server
     usage: /level
     aliases: [ lvl ]
-  skyify:
-    description: Skyify an Item
-    usage: /skyify
+  compare:
+    description: Compare
+    usage: /compare

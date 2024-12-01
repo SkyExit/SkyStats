@@ -14,10 +14,16 @@ public class StatsCommand implements CommandExecutor {
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if(sender instanceof Player) {
-            Player player = (args.length == 1) ? ((Bukkit.getPlayer(args[0]) != null) ? Bukkit.getPlayer(args[0])
+            Player player = (Player) sender;
+            Player target = (args.length == 1) ? ((Bukkit.getPlayer(args[0]) != null) ? Bukkit.getPlayer(args[0])
                     : (Player) sender) : (Player) sender;
 
-            ItemsManager itemsManager = new ItemsManager(player);
+            if(args.length == 1) {
+                if(Bukkit.getPlayer(args[0]) != null) { Player p = Bukkit.getPlayer(args[0]);
+                } else { Player p = (Player) sender; }
+            } else { Player p = (Player) sender; }
+
+            ItemsManager itemsManager = new ItemsManager(target);
             Inventory menu = Bukkit.getServer().createInventory(player, 9 * 4, McColors.AQUA + "Sky" + McColors.GOLD + "Stats");
 
             for (int i : new int[] {0,9,18,27,8,17,26,35}) {
