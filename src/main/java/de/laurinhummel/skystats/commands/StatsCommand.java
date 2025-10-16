@@ -18,11 +18,6 @@ public class StatsCommand implements CommandExecutor {
             Player target = (args.length == 1) ? ((Bukkit.getPlayer(args[0]) != null) ? Bukkit.getPlayer(args[0])
                     : (Player) sender) : (Player) sender;
 
-            if(args.length == 1) {
-                if(Bukkit.getPlayer(args[0]) != null) { Player p = Bukkit.getPlayer(args[0]);
-                } else { Player p = (Player) sender; }
-            } else { Player p = (Player) sender; }
-
             ItemsManager itemsManager = new ItemsManager(target);
             Inventory menu = Bukkit.getServer().createInventory(player, 9 * 4, McColors.AQUA + "Sky" + McColors.GOLD + "Stats");
 
