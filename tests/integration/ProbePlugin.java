@@ -51,6 +51,7 @@ public final class ProbePlugin extends JavaPlugin implements Listener {
         if (!complete) tasks.entityLater(player, this::heartbeat, () -> {}, 1);
     }
     private void start() {
+        seedSkin();
         player.setStatistic(Statistic.MINE_BLOCK, Material.STONE, 100);
         player.setStatistic(Statistic.MINE_BLOCK, Material.DIRT, 20);
         player.setStatistic(Statistic.JUMP, 7);
@@ -58,9 +59,14 @@ public final class ProbePlugin extends JavaPlugin implements Listener {
         player.performCommand("stats");
         waitFor(() -> menu(Route.Mode.MAIN), () -> {
             check(holder().getInventory().getSize() == 54, "own-54-slot-menu");
+            check(type(MenuLayout.CENTER) == Material.GOLD_BLOCK, "centered-leaderboard-button");
+            for (Category category : Category.values()) check(type(MenuLayout.slot(category)) == Material.valueOf(category.icon()), "category-layout-" + category);
+            Set<Integer> slots = new HashSet<>();
+            for (Category category : Category.values()) slots.add(MenuLayout.slot(category));
+            for (int slot : slots) check(slots.contains(slot / 9 * 9 + 8 - slot % 9) && slots.contains((4 - slot / 9) * 9 + slot % 9), "symmetric-menu-" + slot);
             attacks();
             networkAttacks(() -> {
-            click(1);
+            click(MenuLayout.slot(Category.MINED));
             waitFor(() -> menu(Route.Mode.PERSONAL_CATEGORY), () -> {
                 check(holder().route().category() == Category.MINED, "mined-category-mapping");
                 check(type(0) == Material.STONE && lore(0).contains("100"), "live-values-and-personal-sorting");
@@ -101,7 +107,7 @@ public final class ProbePlugin extends JavaPlugin implements Listener {
         player.performCommand("stats OfflineA");
         waitFor(() -> menu(Route.Mode.MAIN) && holder().context().target().name().equals("OfflineA"), () -> {
             passed.add("offline-player-lookup");
-            click(1);
+            click(MenuLayout.slot(Category.MINED));
             waitFor(() -> menu(Route.Mode.PERSONAL_CATEGORY), () -> {
                 check(type(0) == Material.STONE && lore(0).contains("1.000"), "offline-file-value");
                 check(type(53) == Material.PLAYER_HEAD, "next-page-player-head");
@@ -119,13 +125,13 @@ public final class ProbePlugin extends JavaPlugin implements Listener {
         });
     }
     private void server() {
-        click(13);
+        click(MenuLayout.CENTER);
         waitFor(() -> menu(Route.Mode.SERVER), () -> {
             click(50);
             waitFor(() -> menu(Route.Mode.SERVER), () -> {
                 service.snapshot(true).whenComplete((snapshot, error) -> tasks.entity(player, () -> protect(() -> {
                     if (error != null) throw new IllegalStateException(error);
-                    click(1);
+                    click(MenuLayout.slot(Category.MINED));
                     waitFor(() -> menu(Route.Mode.SERVER_CATEGORY), this::leaderboard);
                 }), () -> fail("Player retired")));
             });
@@ -139,16 +145,32 @@ public final class ProbePlugin extends JavaPlugin implements Listener {
         check(lore.contains("1. OfflineA") && lore.contains("1. OfflineB") && lore.contains("3. OfflineC"), "competition-ranks-1-1-3");
         check(lore.contains("4. StatsTester") && lore.contains("100"), "viewer-position-outside-top-three");
         click(0);
-        waitFor(() -> menu(Route.Mode.RANKING), () -> {
+        waitFor(() -> menu(Route.Mode.RANKING) && textured(3), () -> {
             check(name(0).contains("OfflineA") && name(1).contains("OfflineB"), "detail-player-ranking");
             check(type(0) == Material.PLAYER_HEAD, "ranking-player-heads");
+            check(textured(3), "online-player-skin-retained-in-ranking");
             click(48);
             waitFor(() -> menu(Route.Mode.SERVER_CATEGORY), () -> {
                 click(48); waitFor(() -> menu(Route.Mode.SERVER), () -> {
-                    click(13); waitFor(() -> menu(Route.Mode.MEDALS), this::medals);
+                    click(MenuLayout.CENTER); waitFor(() -> menu(Route.Mode.MEDALS), this::medals);
                 });
             });
         });
+    }
+    private void seedSkin() {
+        try (HeadFactory heads = new HeadFactory(getLogger())) {
+            Object arrow = SkullMeta.class.getMethod("getPlayerProfile").invoke(heads.arrow(true).getItemMeta());
+            var getter = Player.class.getMethod("getPlayerProfile");
+            Object profile = getter.invoke(player);
+            Class<?> api = getter.getReturnType();
+            try {
+                var textures = api.getMethod("getTextures");
+                api.getMethod("setTextures", textures.getReturnType()).invoke(profile, textures.invoke(arrow));
+            } catch (NoSuchMethodException ignored) {
+                api.getMethod("setProperties", Collection.class).invoke(profile, api.getMethod("getProperties").invoke(arrow));
+            }
+            Player.class.getMethod("setPlayerProfile", api).invoke(player, profile);
+        } catch (ReflectiveOperationException error) { throw new IllegalStateException(error); }
     }
     private void medals() {
         check(type(0) == Material.PLAYER_HEAD && lore(0).contains("Gesamt:"), "medal-counts-and-player-heads");
@@ -201,10 +223,12 @@ public final class ProbePlugin extends JavaPlugin implements Listener {
         try {
             try {
                 Object profile = SkullMeta.class.getMethod("getOwnerProfile").invoke(meta);
+                if (profile == null) return false;
                 Object textures = Class.forName("org.bukkit.profile.PlayerProfile").getMethod("getTextures").invoke(profile);
                 return Class.forName("org.bukkit.profile.PlayerTextures").getMethod("getSkin").invoke(textures) != null;
             } catch (NoSuchMethodException ignored) {
                 Object profile = SkullMeta.class.getMethod("getPlayerProfile").invoke(meta);
+                if (profile == null) return false;
                 var properties = (Collection<?>) Class.forName("com.destroystokyo.paper.profile.PlayerProfile").getMethod("getProperties").invoke(profile);
                 return !properties.isEmpty();
             }

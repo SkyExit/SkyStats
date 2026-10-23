@@ -132,6 +132,9 @@ public final class StatsService implements AutoCloseable {
                 }
                 if (failed > 0) warnings.add(failed + " fehlerhafte Statistikdatei(en) ausgelassen");
             } catch (IOException error) { throw new CompletionException(error); }
+        } else {
+            warnings.add("Statistikordner nicht gefunden: " + directory);
+            logger.warning("Statistics directory not found: " + directory + "; check stats-directory in config.yml");
         }
         return new DiskData(players, warnings);
     }

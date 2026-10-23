@@ -114,8 +114,8 @@ Das Menüsystem soll visuell einheitlich und selbsterklärend sein. Ein Wechsel 
 
 **Konkrete Kopftexturen:**
 
-- **Links – „Iron Arrow Left“, Head ID 2296:** https://minecraft-heads.com/custom-heads/head/2296-arrow-left
-- **Rechts – „Iron Arrow Right“, Head ID 2298:** https://minecraft-heads.com/custom-heads/head/2298-arrow-right
+- **Links – „Oak Wood Arrow Left“, Head ID 2762 (ab v2.1.0-BETA):** https://minecraft-heads.com/custom-heads/head/2762-oak-wood-arrow-left
+- **Rechts – „Oak Wood Arrow Right“, Head ID 2763 (ab v2.1.0-BETA):** https://minecraft-heads.com/custom-heads/head/2763-oak-wood-arrow-right
 
 Diese beiden Köpfe bilden ein optisch zusammenpassendes Pfeilpaar. Es sollen **echte texturierte `PLAYER_HEAD`-Items** mit sichtbar aufgebrachten Pfeilen sein, keine normalen Pfeil-Items. Die Kopftexturen bzw. ihre Texture-Properties sollten im Plugin hinterlegt werden, damit zur Laufzeit weder eine Webanfrage noch ein zusätzliches Head-Database-Plugin zwingend notwendig ist. Eine kompatible Umsetzung für die jeweiligen Minecraft-Versionen ist erforderlich.
 
@@ -386,8 +386,8 @@ Diese Quellen dienen zur technischen Einordnung und für die konkreten Pfeilkopf
 - [Minecraft Wiki – Statistics: Kategorien, Einheiten, Speicherung und Vanilla-IDs](https://minecraft.wiki/w/Statistic)
 - [PaperMC – Supporting Paper and Folia: Scheduler und Threading](https://docs.papermc.io/paper/dev/folia-support/)
 - [Spigot API – `org.bukkit.Statistic` (aktuelle API-Referenz)](https://hub.spigotmc.org/javadocs/spigot/org/bukkit/Statistic.html)
-- [Minecraft-Heads – Iron Arrow Left (2296)](https://minecraft-heads.com/custom-heads/head/2296-arrow-left)
-- [Minecraft-Heads – Iron Arrow Right (2298)](https://minecraft-heads.com/custom-heads/head/2298-arrow-right)
+- [Minecraft-Heads – Oak Wood Arrow Left (2762)](https://minecraft-heads.com/custom-heads/head/2762-oak-wood-arrow-left)
+- [Minecraft-Heads – Oak Wood Arrow Right (2763)](https://minecraft-heads.com/custom-heads/head/2763-oak-wood-arrow-right)
 
 ---
 
