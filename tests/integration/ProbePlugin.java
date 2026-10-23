@@ -51,6 +51,8 @@ public final class ProbePlugin extends JavaPlugin implements Listener {
         if (!complete) tasks.entityLater(player, this::heartbeat, () -> {}, 1);
     }
     private void start() {
+        player.setInvulnerable(true);
+        player.setHealth(20.0);
         seedSkin();
         player.setStatistic(Statistic.MINE_BLOCK, Material.STONE, 100);
         player.setStatistic(Statistic.MINE_BLOCK, Material.DIRT, 20);
@@ -59,6 +61,7 @@ public final class ProbePlugin extends JavaPlugin implements Listener {
         player.performCommand("stats");
         waitFor(() -> menu(Route.Mode.MAIN), () -> {
             check(holder().getInventory().getSize() == 54, "own-54-slot-menu");
+            personalNameOnlyInTitle("StatsTester", "own-main");
             check(type(MenuLayout.CENTER) == Material.GOLD_BLOCK, "centered-leaderboard-button");
             for (Category category : Category.values()) check(type(MenuLayout.slot(category)) == Material.valueOf(category.icon()), "category-layout-" + category);
             Set<Integer> slots = new HashSet<>();
@@ -70,6 +73,7 @@ public final class ProbePlugin extends JavaPlugin implements Listener {
             waitFor(() -> menu(Route.Mode.PERSONAL_CATEGORY), () -> {
                 check(holder().route().category() == Category.MINED, "mined-category-mapping");
                 check(type(0) == Material.STONE && lore(0).contains("100"), "live-values-and-personal-sorting");
+                personalNameOnlyInTitle("StatsTester", "own-category");
                 click(48);
                 waitFor(() -> menu(Route.Mode.MAIN), this::offline);
             });
@@ -107,15 +111,18 @@ public final class ProbePlugin extends JavaPlugin implements Listener {
         player.performCommand("stats OfflineA");
         waitFor(() -> menu(Route.Mode.MAIN) && holder().context().target().name().equals("OfflineA"), () -> {
             passed.add("offline-player-lookup");
+            personalNameOnlyInTitle("OfflineA", "offline-main");
             click(MenuLayout.slot(Category.MINED));
             waitFor(() -> menu(Route.Mode.PERSONAL_CATEGORY), () -> {
                 check(type(0) == Material.STONE && lore(0).contains("1.000"), "offline-file-value");
+                personalNameOnlyInTitle("OfflineA", "offline-category");
                 check(type(53) == Material.PLAYER_HEAD, "next-page-player-head");
                 check(textured(53), "next-head-texture");
                 click(53);
                 waitFor(() -> menu(Route.Mode.PERSONAL_CATEGORY) && holder().route().page() == 1, () -> {
                     check(type(45) == Material.PLAYER_HEAD && textured(45), "previous-page-textured-head");
                     check(name(49).contains("2 / 2"), "page-counter");
+                    personalNameOnlyInTitle("OfflineA", "offline-category-second-page");
                     click(45);
                     waitFor(() -> menu(Route.Mode.PERSONAL_CATEGORY) && holder().route().page() == 0, () -> {
                         click(48); waitFor(() -> menu(Route.Mode.MAIN), this::server);
@@ -180,6 +187,7 @@ public final class ProbePlugin extends JavaPlugin implements Listener {
             click(0);
             waitFor(() -> menu(Route.Mode.PROFILE), () -> {
                 check(lore(0).contains("minecraft:"), "medal-profile-individual-statistics");
+                personalNameOnlyInTitle(holder().context().snapshot().players().get(holder().route().subject()).name(), "medal-profile");
                 player.performCommand("stats");
                 waitFor(() -> player.getOpenInventory().getTopInventory().getHolder() instanceof StatsHolder loading && loading.context() == null, () -> {
                 player.closeInventory();
@@ -195,6 +203,16 @@ public final class ProbePlugin extends JavaPlugin implements Listener {
                 });
             });
         });
+    }
+    private void personalNameOnlyInTitle(String target, String label) {
+        check(player.getOpenInventory().getTitle().contains(target), label + "-name-in-title");
+        for (ItemStack item : holder().getInventory().getContents()) {
+            if (item == null || !item.hasItemMeta()) continue;
+            var meta = item.getItemMeta();
+            check(!meta.hasDisplayName() || !ChatColor.stripColor(meta.getDisplayName()).contains(target), label + "-no-name-in-item", false);
+            check(!meta.hasLore() || meta.getLore().stream().noneMatch(line -> ChatColor.stripColor(line).contains(target)), label + "-no-name-in-lore", false);
+        }
+        passed.add(label + "-name-only-in-title");
     }
     private void attacks() {
         InventoryView view = player.getOpenInventory();

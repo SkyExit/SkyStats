@@ -25,7 +25,8 @@ public final class SkyStatsPlugin extends JavaPlugin implements Listener, Comman
         Path serverRoot = Bukkit.getWorldContainer().toPath().toAbsolutePath().normalize();
         String configured = getConfig().getString("stats-directory", "");
         Path stats = configured.isBlank() ? StatsPaths.primaryStatistics(Bukkit.getWorlds().get(0).getWorldFolder().toPath()) : serverRoot.resolve(configured).normalize();
-        PlayerDirectory names = new PlayerDirectory(getDataFolder().toPath().resolve("players.json"));
+        PlayerDirectory names = new PlayerDirectory(getDataFolder().toPath().resolve("players.json"),
+                uuid -> Bukkit.getOfflinePlayer(uuid).getName());
         int cooldown = positive("refresh-cooldown-seconds", 5, 3600);
         service = new StatsService(stats, Path.of("usercache.json").toAbsolutePath().normalize(), names,
                 new StatsFileReader(positive("max-file-size-mib", 16, 1024) * 1024L * 1024L, positive("max-statistics-per-player", 100000, 1000000)),

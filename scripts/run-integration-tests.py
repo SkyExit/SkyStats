@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 """Run SkyStats against real Paper/Folia with disposable Vanilla-stat fixtures."""
 import argparse
+import gzip
 import hashlib
 import json
 import os
 import pathlib
 import shutil
 import subprocess
+import struct
 import sys
 import time
 import uuid
@@ -52,13 +54,28 @@ def fixtures(server, version):
     players.update({f"Medal{i:02}": 0 for i in range(55)})
     for index, (name, stone) in enumerate(players.items()):
         ident = offline_uuid(name)
-        cache.append({"uuid": ident, "name": name, "expiresOn": "2030-01-01 00:00:00 +0000"})
+        if name != "OfflineA":
+            cache.append({"uuid": ident, "name": name, "expiresOn": "2030-01-01 00:00:00 +0000"})
         stats = {"minecraft:mined": {"minecraft:stone": stone}, "minecraft:custom": {f"minecraft:probe_{index}": 1}}
         if name == "OfflineA":
             stats["minecraft:mined"].update({f"minecraft:probe_block_{i}": 1 for i in range(50)})
         (directory / f"{ident}.json").write_text(json.dumps({"stats": stats, "DataVersion": 2975}))
     (directory / f"{uuid.uuid4()}.json").write_text('{"stats":')
     (server / "usercache.json").write_text(json.dumps(cache))
+    # OfflineA exists only in saved Bukkit player data, never in either name cache.
+    playerdata = server / ("world/players/data" if version == "26.3" else "world/playerdata")
+    playerdata.mkdir(parents=True, exist_ok=True)
+    # Reset the synthetic client's saved death state before connecting again.
+    for suffix in (".dat", ".dat_old"):
+        (playerdata / f"{offline_uuid('StatsTester')}{suffix}").unlink(missing_ok=True)
+    nbt_string = lambda value: struct.pack(">H", len(value.encode("utf-8"))) + value.encode("utf-8")
+    nbt = b"\x0a\x00\x00\x0a" + nbt_string("bukkit") + b"\x08" + nbt_string("lastKnownName") + nbt_string("OfflineA") + b"\x00\x00"
+    (playerdata / f"{offline_uuid('OfflineA')}.dat").write_bytes(gzip.compress(nbt))
+    names_file = server / "plugins/SkyStats/players.json"
+    if names_file.exists():
+        names = json.loads(names_file.read_text(encoding="utf-8"))
+        names.pop(offline_uuid("OfflineA"), None)
+        names_file.write_text(json.dumps(names), encoding="utf-8")
     whitelist = server / "whitelist.json"
     allowed = json.loads(whitelist.read_text()) if whitelist.exists() else []
     if not any(entry.get("uuid") == offline_uuid("StatsTester") for entry in allowed):

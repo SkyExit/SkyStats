@@ -154,7 +154,7 @@ public final class MenuController {
             for (int slot : new int[] {13, 21, 23, 31}) holder.getInventory().setItem(slot, item(Material.CYAN_STAINED_GLASS_PANE, " ", List.of()));
             for (Category category : Category.values()) {
                 Route child = here.child(server ? Route.Mode.SERVER_CATEGORY : Route.Mode.PERSONAL_CATEGORY, category, null, null);
-                button(holder, MenuLayout.slot(category), item(Material.valueOf(category.icon()), "§b" + category.title(), List.of("§7" + (server ? "Serverweit, inklusive Offline-Spieler" : "Spieler: " + context.target().name()), "§eKlicken: öffnen")), () -> navigate(viewer, child, context));
+                button(holder, MenuLayout.slot(category), item(Material.valueOf(category.icon()), "§b" + category.title(), server ? List.of("§7Serverweit, inklusive Offline-Spieler", "§eKlicken: öffnen") : List.of("§eKlicken: öffnen")), () -> navigate(viewer, child, context));
             }
             if (server) button(holder, MenuLayout.CENTER, item(Material.GOLD_INGOT, "§6Medaillen-Ranking", List.of("§7Gesamtzahl, dann Gold / Silber / Bronze", "§7Gleichstände: 1, 1, 3; Nullwerte ohne Medaille")), () -> navigate(viewer, here.child(Route.Mode.MEDALS, null, null, null), context));
             else button(holder, MenuLayout.CENTER, item(Material.GOLD_BLOCK, "§6Server-Leaderboards", List.of("§7Alle bekannten Spieler, auch offline", "§eKlicken: Bestenlisten und Medaillen")), () -> navigate(viewer, here.child(Route.Mode.SERVER, null, null, null), context));
@@ -167,16 +167,12 @@ public final class MenuController {
         button(holder, 48, item(Material.OAK_DOOR, route.parent() == null ? "§eSchließen" : "§eZurück", List.of()), () -> {
             if (here.parent() == null) viewer.closeInventory(); else navigate(viewer, here.parent(), context);
         });
-        List<String> status = new ArrayList<>(List.of("§7" + route.title(), "§7Spieler: " + viewedName,
+        List<String> status = new ArrayList<>(List.of("§7" + route.title(),
                 "§7Einträge: " + ValueFormatter.number(rows.size()),
                 "§7Server-Stand: " + DateTimeFormatter.ofPattern("HH:mm:ss").withZone(ZoneId.systemDefault()).format(context.snapshot().createdAt()),
                 "§7Live-Werte werden über mehrere Ticks gelesen."));
         context.snapshot().warnings().stream().limit(5).forEach(warning -> status.add("§e" + warning));
         if (route.key() != null) status.add("§8" + route.key().technicalName());
-        if (route.subject() != null) {
-            PlayerStats subject = context.snapshot().players().get(route.subject());
-            if (subject != null) status.add("§7Medaillen von: " + subject.name());
-        }
         holder.getInventory().setItem(49, item(Material.PAPER, "§bSeite " + (page.index() + 1) + " / " + page.count(), status));
         button(holder, 50, item(Material.SUNFLOWER, "§aAktualisieren", List.of("§7Vanilla-Daten erneut laden", "§7Serverweiter Cache schützt vor häufigen Berechnungen.")), () -> refresh(viewer, holder));
         show(viewer, holder);
@@ -189,8 +185,8 @@ public final class MenuController {
             List<String> lore = new ArrayList<>();
             boolean server = route.mode() == Route.Mode.SERVER_CATEGORY;
             lore.add("§7" + (server ? "Serverweit – " : "") + route.category().valueLabel() + ": §f" + ValueFormatter.format(key, server ? context.snapshot().total(key) : context.target().value(key)));
-            lore.add("§7Spieler: " + (server ? "alle bekannten UUIDs" : context.target().name()));
             if (server) {
+                lore.add("§7Spieler: alle bekannten UUIDs");
                 lore.add("");
                 List<Snapshot.RankedPlayer> leaders = context.snapshot().ranking(key).stream().limit(3).toList();
                 leaders.forEach(player -> lore.add(placement(player, key)));
@@ -215,7 +211,7 @@ public final class MenuController {
             holder.action(slot, () -> navigate(viewer, route.child(Route.Mode.PROFILE, null, null, medals.uuid()), context));
         } else if (row instanceof Award award) {
             button(holder, slot, decorate(new ItemStack(labels.icon(award.key())), medalColor(award.placement().rank()) + medalName(award.placement().rank()) + " – " + labels.name(award.key()),
-                    List.of("§7Spieler: " + award.placement().name(), "§7Wert: " + ValueFormatter.format(award.key(), award.placement().value()), "§8" + award.key().technicalName(), "§eKlicken: komplette Rangliste")),
+                    List.of("§7Wert: " + ValueFormatter.format(award.key(), award.placement().value()), "§8" + award.key().technicalName(), "§eKlicken: komplette Rangliste")),
                     () -> navigate(viewer, route.child(Route.Mode.RANKING, null, award.key(), null), context));
         }
     }

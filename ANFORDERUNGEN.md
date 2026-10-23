@@ -166,7 +166,7 @@ Wichtig ist die **korrekte Statistikbezeichnung** und die klare Darstellung des 
 
 ### Andere Spieler
 
-Wird das Menü für eine andere Person aufgerufen, ändert sich ausschließlich die Datenquelle: Das Aussehen, die Kategorien, die Sortierung und die Navigation bleiben identisch. Im Titel muss erkennbar sein, **wessen Statistiken** angezeigt werden. Für Offline-Spieler darf kein Beitritt zum Server nötig sein.
+Wird das Menü für eine andere Person aufgerufen, ändert sich ausschließlich die Datenquelle: Das Aussehen, die Kategorien, die Sortierung und die Navigation bleiben identisch. Im Titel muss erkennbar sein, **wessen Statistiken** angezeigt werden. Ab v2.1.1-BETA steht der Spielername in persönlichen Ansichten und Medaillenprofilen ausschließlich im Inventartitel; Kategorie-Items, Statistik-Items und Seiteninformationen wiederholen ihn nicht. Das gilt auch beim eigenen `/stats`. Für Offline-Spieler darf kein Beitritt zum Server nötig sein.
 
 ## 7. Serverweite Leaderboards
 

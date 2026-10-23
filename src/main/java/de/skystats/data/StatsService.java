@@ -123,6 +123,7 @@ public final class StatsService implements AutoCloseable {
                     if (++count > maxFiles) throw new IOException("Player file limit exceeded; increase max-player-files");
                     try {
                         Map<StatKey, Long> values = reader.read(file);
+                        names.resolve(uuid, warnings);
                         players.put(uuid, new PlayerStats(uuid, names.name(uuid), values));
                         totalValues += values.size();
                     } catch (IOException | RuntimeException error) {

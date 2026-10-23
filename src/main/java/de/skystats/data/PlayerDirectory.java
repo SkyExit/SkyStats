@@ -6,16 +6,21 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 
 public final class PlayerDirectory {
     private final Map<UUID, String> names = new ConcurrentHashMap<>();
     private final Map<UUID, String> liveNames = new ConcurrentHashMap<>();
     private final Path persisted;
+    private final Function<UUID, String> offlineNames;
     private volatile Map<UUID, String> known = Map.of();
-    public PlayerDirectory(Path persisted) { this.persisted = persisted; }
+    public PlayerDirectory(Path persisted) { this(persisted, uuid -> null); }
+    public PlayerDirectory(Path persisted, Function<UUID, String> offlineNames) {
+        this.persisted = persisted; this.offlineNames = offlineNames;
+    }
 
     public void remember(UUID uuid, String name) {
-        if (name != null && name.matches("[A-Za-z0-9_]{1,16}")) { names.put(uuid, name); liveNames.put(uuid, name); }
+        if (validName(name)) { names.put(uuid, name); liveNames.put(uuid, name); }
     }
 
     public void load(Path userCache, List<String> warnings) {
@@ -29,19 +34,32 @@ public final class PlayerDirectory {
             JsonElement root = JsonParser.parseReader(reader);
             if (array) {
                 for (JsonElement element : root.getAsJsonArray()) {
+                    if (!element.isJsonObject()) continue;
                     JsonObject entry = element.getAsJsonObject();
-                    putName(entry.get("uuid").getAsString(), entry.get("name").getAsString());
+                    putName(entry.get("uuid"), entry.get("name"));
                 }
             } else {
-                root.getAsJsonObject().entrySet().forEach(entry -> putName(entry.getKey(), entry.getValue().getAsString()));
+                root.getAsJsonObject().entrySet().forEach(entry -> putName(new JsonPrimitive(entry.getKey()), entry.getValue()));
             }
         } catch (IOException | RuntimeException error) { warnings.add("Namensdatei konnte nicht gelesen werden: " + path.getFileName()); }
     }
-    private void putName(String uuid, String name) {
-        try { if (name.matches("[A-Za-z0-9_]{1,16}")) names.put(UUID.fromString(uuid), name); }
+    private static boolean validName(String name) { return name != null && name.matches("[A-Za-z0-9_]{1,16}"); }
+    private void putName(JsonElement uuid, JsonElement name) {
+        if (uuid == null || !uuid.isJsonPrimitive() || name == null || !name.isJsonPrimitive()) return;
+        try { if (validName(name.getAsString())) names.put(UUID.fromString(uuid.getAsString()), name.getAsString()); }
         catch (IllegalArgumentException ignored) { /* A malformed identity never changes another UUID. */ }
     }
-    public String name(UUID uuid) { return names.getOrDefault(uuid, uuid.toString().substring(0, 8)); }
+    /** Called by the data worker because the server may read saved player data. */
+    public void resolve(UUID uuid, List<String> warnings) {
+        if (names.containsKey(uuid)) return;
+        try {
+            String name = offlineNames.apply(uuid);
+            if (validName(name)) names.putIfAbsent(uuid, name);
+        } catch (RuntimeException error) {
+            warnings.add("Spielername konnte nicht aufgelöst werden: " + uuid);
+        }
+    }
+    public String name(UUID uuid) { return names.getOrDefault(uuid, "Unbekannt (" + uuid.toString().substring(0, 8) + ")"); }
     public void publish(Set<UUID> uuids) {
         Map<UUID, String> copy = new HashMap<>(); uuids.forEach(uuid -> copy.put(uuid, name(uuid))); known = Map.copyOf(copy);
     }
@@ -56,7 +74,7 @@ public final class PlayerDirectory {
         catch (IllegalArgumentException ignored) { return searchable.entrySet().stream().filter(e -> e.getValue().equalsIgnoreCase(input)).map(Map.Entry::getKey).sorted().toList(); }
     }
     public List<String> complete(String prefix) {
-        return searchable().values().stream().filter(name -> name.toLowerCase(Locale.ROOT).startsWith(prefix.toLowerCase(Locale.ROOT))).distinct().sorted(String.CASE_INSENSITIVE_ORDER).limit(100).toList();
+        return searchable().values().stream().filter(PlayerDirectory::validName).filter(name -> name.toLowerCase(Locale.ROOT).startsWith(prefix.toLowerCase(Locale.ROOT))).distinct().sorted(String.CASE_INSENSITIVE_ORDER).limit(100).toList();
     }
     public void save() throws IOException {
         Files.createDirectories(persisted.getParent());

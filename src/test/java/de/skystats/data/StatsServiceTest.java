@@ -91,6 +91,41 @@ class StatsServiceTest {
             assertTrue(snapshot.warnings().stream().anyMatch(warning -> warning.contains("Statistikordner")));
         }
     }
+    @Test void offlineProfileResolutionRunsOnDataWorkerAndFeedsAllViews() throws Exception {
+        UUID id = UUID.randomUUID(); file(id, 300);
+        PlayerDirectory names = new PlayerDirectory(root.resolve("plugin/players.json"), uuid -> {
+            assertEquals(id, uuid);
+            assertTrue(Thread.currentThread().getName().startsWith("SkyStats-data"));
+            return "SavedOffline";
+        });
+        try (StatsService service = new StatsService(root.resolve("stats"), root.resolve("missing.json"), names,
+                new StatsFileReader(1024 * 1024, 1000), live, Logger.getAnonymousLogger(),
+                1000, 1000, 5, Duration.ofSeconds(30), Duration.ZERO)) {
+            Snapshot snapshot = service.snapshot(false).get(3, TimeUnit.SECONDS);
+            assertEquals("SavedOffline", snapshot.ranking(STONE).get(0).name());
+            assertEquals("SavedOffline", snapshot.medals().get(0).name());
+            assertEquals(List.of(id), names.find("SavedOffline"));
+            assertEquals(List.of("SavedOffline"), names.complete("saved"));
+            assertEquals("SavedOffline", service.personal(id, snapshot).get(3, TimeUnit.SECONDS).name());
+            assertTrue(Files.readString(root.resolve("plugin/players.json")).contains("SavedOffline"));
+            assertTrue(snapshot.warnings().isEmpty());
+        }
+        verifyNoInteractions(live);
+    }
+    @Test void failedOfflineNameResolutionKeepsStatisticsAndUuidLookup() throws Exception {
+        UUID id = UUID.randomUUID(); file(id, 300);
+        PlayerDirectory names = new PlayerDirectory(root.resolve("plugin/players.json"), uuid -> { throw new IllegalStateException("unavailable"); });
+        try (StatsService service = new StatsService(root.resolve("stats"), root.resolve("missing.json"), names,
+                new StatsFileReader(1024 * 1024, 1000), live, Logger.getAnonymousLogger(),
+                1000, 1000, 5, Duration.ofSeconds(30), Duration.ZERO)) {
+            Snapshot snapshot = service.snapshot(false).get(3, TimeUnit.SECONDS);
+            assertEquals(300, snapshot.total(STONE));
+            assertEquals(List.of(id), names.find(id.toString()));
+            assertEquals(1, snapshot.warnings().size());
+            assertTrue(snapshot.warnings().get(0).contains(id.toString()));
+            assertTrue(names.complete("").isEmpty());
+        }
+    }
     @Test void shutdownCancelsPendingLiveReads() throws Exception {
         Player player = mock(Player.class); UUID uuid = UUID.randomUUID();
         when(player.getUniqueId()).thenReturn(uuid); when(player.getName()).thenReturn("Online");
