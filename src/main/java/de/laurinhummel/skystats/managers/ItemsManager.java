@@ -4,24 +4,24 @@ import de.laurinhummel.skystats.misc.McColors;
 import de.laurinhummel.skystats.misc.SkyDataFormatter;
 import org.bukkit.Material;
 import org.bukkit.Statistic;
-import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
 
 import java.util.ArrayList;
+import java.util.Objects;
 
 public class ItemsManager {
-    private final Player player;
-    public ItemsManager(Player player) { this.player = player; }
+    private final PlayerStatistics player;
+    public ItemsManager(PlayerStatistics player) { this.player = player; }
     public ItemStack getPlaceholder() {
         ItemStack placeholder = new ItemStack(Material.GRAY_STAINED_GLASS_PANE);
         ItemMeta placeholdermeta = placeholder.getItemMeta();
-        assert placeholdermeta != null;
+        Objects.requireNonNull(placeholdermeta, "Missing placeholder item metadata");
         placeholdermeta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
         placeholdermeta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
-        placeholdermeta.setDisplayName(McColors.RED + "PLACEHOLDER");
+        placeholdermeta.setDisplayName(" ");
         placeholder.setItemMeta(placeholdermeta);
 
         return placeholder;
@@ -30,12 +30,12 @@ public class ItemsManager {
     public ItemStack getPlayerHead() {
         final ItemStack head = new ItemStack(Material.PLAYER_HEAD);
         final SkullMeta meta = (SkullMeta) head.getItemMeta();
-        assert meta != null;
-        meta.setOwningPlayer(player);
+        Objects.requireNonNull(meta, "Missing player head metadata");
+        meta.setOwnerProfile(player.getProfile());
         meta.setDisplayName(McColors.AQUA + "Statistics for " + McColors.GOLD + player.getName());
 
-        StatisticsManager sm = new StatisticsManager(player);
-        LevelManager level = new LevelManager(player);
+        StatisticsManager sm = new StatisticsManager(player::getStatistic);
+        LevelManager level = new LevelManager(sm.getTotalEXP());
 
         ArrayList<String> headLore = new ArrayList<>();
             headLore.add(McColors.GRAY + "PlayTime EXP: " + McColors.GOLD + SkyDataFormatter.formatNumber(sm.getPlayTimeEXP()));
@@ -56,14 +56,14 @@ public class ItemsManager {
     public ItemStack getPlayTimeStatistics() {
         ItemStack playTimeStatistics = new ItemStack(Material.CLOCK);
         ItemMeta playTimeStatisticsMeta = playTimeStatistics.getItemMeta();
-        assert playTimeStatisticsMeta != null;
+        Objects.requireNonNull(playTimeStatisticsMeta, "Missing clock metadata");
         playTimeStatisticsMeta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
         playTimeStatisticsMeta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
         playTimeStatisticsMeta.setDisplayName(McColors.AQUA + "Play Time Statistics" + " - "
                 + McColors.GREEN + "Total time");
 
         ArrayList<String> playTimeStatisticsLore = new ArrayList<>();
-        playTimeStatisticsLore.add(McColors.GRAY + "- in the world : " + McColors.GOLD + SkyDataFormatter.formatTicks(player.getStatistic(Statistic.TOTAL_WORLD_TIME)));
+        playTimeStatisticsLore.add(McColors.GRAY + "- in the world: " + McColors.GOLD + SkyDataFormatter.formatTicks(player.getStatistic(Statistic.TOTAL_WORLD_TIME)));
         playTimeStatisticsLore.add(McColors.GRAY + "- since last death: " + McColors.GOLD + SkyDataFormatter.formatTicks(player.getStatistic(Statistic.TIME_SINCE_DEATH)));
         playTimeStatisticsLore.add(McColors.GRAY + "- since last rest: " + McColors.GOLD + SkyDataFormatter.formatTicks(player.getStatistic(Statistic.TIME_SINCE_REST)));
         playTimeStatisticsLore.add(McColors.GRAY + "- sneaked: " + McColors.GOLD + SkyDataFormatter.formatTicks(player.getStatistic(Statistic.SNEAK_TIME)));
@@ -77,7 +77,7 @@ public class ItemsManager {
     public ItemStack getCombatStatistics() {
         ItemStack combatStatistics = new ItemStack(Material.IRON_SWORD);
         ItemMeta combatStatisticsMeta = combatStatistics.getItemMeta();
-        assert combatStatisticsMeta != null;
+        Objects.requireNonNull(combatStatisticsMeta, "Missing sword metadata");
         combatStatisticsMeta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
         combatStatisticsMeta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
         combatStatisticsMeta.addItemFlags(ItemFlag.HIDE_DESTROYS);
@@ -85,8 +85,8 @@ public class ItemsManager {
                 + McColors.GREEN + "Total");
 
         ArrayList<String> combatStatisticsLore = new ArrayList<>();
-        combatStatisticsLore.add(McColors.GRAY + "- damage dealt: " + McColors.GOLD + SkyDataFormatter.formatNumber(player.getStatistic(Statistic.DAMAGE_DEALT)));
-        combatStatisticsLore.add(McColors.GRAY + "- damage taken: " + McColors.GOLD + SkyDataFormatter.formatNumber(player.getStatistic(Statistic.DAMAGE_TAKEN)));
+        combatStatisticsLore.add(McColors.GRAY + "- damage dealt (HP): " + McColors.GOLD + SkyDataFormatter.formatNumber(player.getStatistic(Statistic.DAMAGE_DEALT) / 10.0));
+        combatStatisticsLore.add(McColors.GRAY + "- damage taken (HP): " + McColors.GOLD + SkyDataFormatter.formatNumber(player.getStatistic(Statistic.DAMAGE_TAKEN) / 10.0));
         combatStatisticsLore.add(McColors.GRAY + "- player kills: " + McColors.GOLD + SkyDataFormatter.formatNumber(player.getStatistic(Statistic.PLAYER_KILLS)));
         combatStatisticsLore.add(McColors.GRAY + "- mob kills: " + McColors.GOLD + SkyDataFormatter.formatNumber(player.getStatistic(Statistic.MOB_KILLS)));
         combatStatisticsLore.add(McColors.GRAY + "- deaths: " + McColors.GOLD + SkyDataFormatter.formatNumber(player.getStatistic(Statistic.DEATHS)));
@@ -100,7 +100,7 @@ public class ItemsManager {
     public ItemStack getTravelStatistics() {
         ItemStack travelStatistics = new ItemStack(Material.DIAMOND_BOOTS);
         ItemMeta travelStatisticsMeta = travelStatistics.getItemMeta();
-        assert travelStatisticsMeta != null;
+        Objects.requireNonNull(travelStatisticsMeta, "Missing boots metadata");
         travelStatisticsMeta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
         travelStatisticsMeta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
         travelStatisticsMeta.addItemFlags(ItemFlag.HIDE_DESTROYS);
@@ -133,7 +133,7 @@ public class ItemsManager {
     public ItemStack getInteractionStatistics() {
         ItemStack interactionStatistics = new ItemStack(Material.CRAFTING_TABLE);
         ItemMeta interactionStatisticsMeta = interactionStatistics.getItemMeta();
-        assert interactionStatisticsMeta != null;
+        Objects.requireNonNull(interactionStatisticsMeta, "Missing crafting table metadata");
         interactionStatisticsMeta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
         interactionStatisticsMeta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
         interactionStatisticsMeta.addItemFlags(ItemFlag.HIDE_DESTROYS);

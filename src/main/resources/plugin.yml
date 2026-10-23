@@ -1,18 +1,36 @@
 name: SkyStats
-version: ${version}
+version: '${project.version}'
 main: de.laurinhummel.skystats.main.SkyStats
-api-version: 1.18
+api-version: '26.3'
+folia-supported: true
 authors: [ SkyExit ]
-description: A Minecraft statistics plugin
+description: A Minecraft statistics plugin for Spigot, Paper and Folia
 
 commands:
   stats:
-    description: Get some information about jour journey
-    usage: /stats
+    description: View your statistics or those of an online player
+    usage: /stats [player]
+    permission: skystats.stats
   level:
-    description: See your Level on the server
+    description: View your statistics level
     usage: /level
     aliases: [ lvl ]
+    permission: skystats.level
   compare:
-    description: Compare
-    usage: /compare
+    description: Compare the statistics of two online players
+    usage: /compare <player1> <player2>
+    permission: skystats.compare
+
+permissions:
+  skystats.stats:
+    description: View your own statistics
+    default: true
+  skystats.stats.others:
+    description: View statistics of other online players
+    default: true
+  skystats.level:
+    description: View your own level
+    default: true
+  skystats.compare:
+    description: Compare two online players
+    default: true

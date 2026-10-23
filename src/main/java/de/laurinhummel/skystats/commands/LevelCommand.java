@@ -1,24 +1,27 @@
 package de.laurinhummel.skystats.commands;
 
 import de.laurinhummel.skystats.managers.LevelManager;
+import de.laurinhummel.skystats.managers.StatisticsManager;
 import de.laurinhummel.skystats.misc.SkyStrings;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
-import org.bukkit.command.CommandSender;
+import de.laurinhummel.skystats.scheduling.PlayerScheduler;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.Plugin;
 
-public class LevelCommand implements CommandExecutor {
+public final class LevelCommand extends PlayerCommand {
+    public LevelCommand(Plugin plugin, PlayerScheduler scheduler) {
+        super(plugin, scheduler, "skystats.level");
+    }
+
     @Override
-    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if(sender instanceof Player) {
-            Player player = (Player) sender;
-            LevelManager levelManager = new LevelManager(player);
-
-            player.sendMessage(SkyStrings.SKYSTATS + "----------------------------");
-            player.sendMessage(SkyStrings.SKYSTATS + "Level: " + levelManager.getLevel());
-            player.sendMessage(SkyStrings.SKYSTATS + "Exp: " + levelManager.getProgressBar(13));
-            player.sendMessage(SkyStrings.SKYSTATS + "----------------------------");
+    protected void execute(Player player, String[] args) {
+        if (args.length != 0) {
+            error(player, "Usage: /level");
+            return;
         }
-        return true;
+        LevelManager level = new LevelManager(new StatisticsManager(player::getStatistic).getTotalEXP());
+        player.sendMessage(SkyStrings.SKYSTATS + "----------------------------");
+        player.sendMessage(SkyStrings.SKYSTATS + "Level: " + level.getLevel());
+        player.sendMessage(SkyStrings.SKYSTATS + "Exp: " + level.getProgressBar(13));
+        player.sendMessage(SkyStrings.SKYSTATS + "----------------------------");
     }
 }

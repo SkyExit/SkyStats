@@ -1,62 +1,62 @@
 package de.laurinhummel.skystats.managers;
 
 import de.laurinhummel.skystats.misc.McColors;
-import org.bukkit.entity.Player;
 
-public class LevelManager {
-    private static int level;
-    private static int min;
-    private static int max;
-    private static int totalEXP;
+public final class LevelManager {
+    private final long totalEXP;
+    private final int level;
+    private final long min;
+    private final long max;
 
-    public LevelManager(Player player) {
-        StatisticsManager sm = new StatisticsManager(player);
-
-        min = 0;
-        max = 220;
-        level = 1;
-        totalEXP = sm.getTotalEXP();
-
-        for(int i = 0; max < totalEXP; i++) {
-            min = min + 200 + (i * 20);
-            max = (min + 200 + (i * 20)) - 1;
-            if(max < totalEXP) { level = i; }
-            else { break; }
+    public LevelManager(long totalEXP) {
+        this.totalEXP = Math.max(0, totalEXP);
+        // Level 1 needs 220 EXP, each following level needs 20 more.
+        // EXP at the start of level (n + 1): 10*n*n + 210*n.
+        long low = 0;
+        long high = Math.min(this.totalEXP / 220, 960_383_884L) + 1;
+        while (low + 1 < high) {
+            long mid = low + (high - low) / 2;
+            if (mid <= this.totalEXP / (10 * mid + 210)) {
+                low = mid;
+            } else {
+                high = mid;
+            }
         }
+        level = Math.toIntExact(low + 1);
+        min = threshold(low);
+        max = threshold(low + 1);
     }
 
-    public int getLevel() {
-        return level;
+    private static long threshold(long completedLevels) {
+        if (completedLevels > Long.MAX_VALUE / (10 * completedLevels + 210)) {
+            return Long.MAX_VALUE;
+        }
+        return completedLevels * (10 * completedLevels + 210);
     }
 
-    public int getMinEXP() {
-        return min;
+    public int getLevel() { return level; }
+    public long getMinEXP() { return min; }
+    public long getMaxEXP() { return max; }
+    public long getLevelDuration() { return max - min; }
+    public long getLevelProgress() { return totalEXP - min; }
+
+    public int getPercentage() {
+        return (int) Math.min(100, Math.round(100.0 * getLevelProgress() / getLevelDuration()));
     }
-
-    public int getMaxEXP() {
-        return max;
-    }
-
-    public int getLevelDuration() { return getMaxEXP() - getMinEXP(); }
-
-    public int getLevelProgress() { return totalEXP - getMinEXP(); }
-
-    public int getPercentage() { return (int) Math.round(((double) getLevelProgress() / getLevelDuration()) * 100); }
 
     public String getProgressBar(int size) {
-        long r1 = Math.round(size * ((double)getPercentage() / 100));
-        long r2 = size - r1;
-
-        return McColors.AQUA + "["
-                + McColors.GOLD + "▒".repeat((int) r1)
-                + McColors.YELLOW + "░".repeat((int) r2)
-                + McColors.AQUA + "] "
+        if (size < 0) {
+            throw new IllegalArgumentException("Progress bar size must not be negative");
+        }
+        int filled = (int) Math.round(size * (getPercentage() / 100.0));
+        return McColors.AQUA + "[" + McColors.GOLD + "▒".repeat(filled)
+                + McColors.YELLOW + "░".repeat(size - filled) + McColors.AQUA + "] "
                 + McColors.LIGHT_PURPLE + "(" + McColors.AQUA + getPercentage() + "%"
                 + McColors.LIGHT_PURPLE + ")";
     }
 
     public String getProgressBarUnderline() {
-        return McColors.GREEN + "Level: " + getLevel()
-                + McColors.BLUE + " (" + getMinEXP() + " <-> " + getMaxEXP() + ")";
+        return McColors.GREEN + "Level: " + level
+                + McColors.BLUE + " (" + min + " <-> " + max + ")";
     }
 }
