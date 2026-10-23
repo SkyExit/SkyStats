@@ -4,6 +4,7 @@
 > **Zielplattform:** Minecraft Java Edition, primär **26.3**, rückwärtskompatibel bis **mindestens 1.18**  
 > **Serversoftware:** Paper und **Folia**  
 > **Kernprinzip:** Vanilla-Statistiken anzeigen und auswerten, ohne Spielereignisse selbst mitzuzählen.
+> **Code**: Der gesamte Code inklusive aller Kommentare muss auf englisch sein
 
 ## 1. Projektziel
 
@@ -28,7 +29,7 @@ Der Schwerpunkt liegt auf:
 |---|---|
 | Primäre Zielversion | Minecraft Java **26.3** |
 | Älteste Zielversion | **1.18** oder älter, soweit technisch umsetzbar |
-| Server | Paper und Folia |
+| Server | Paper und Folia, nutze aber Spigot als API version, um maximale Kompatibilität zu gewährleisten|
 | Sprache des Plugins | Deutsch als Standard; interne Namen und technische IDs dürfen Englisch bleiben |
 | Vanilla-Daten | Versionabhängige Statistik-IDs korrekt erkennen und auslesen |
 | Fehlende neue Inhalte | Auf älteren Serverversionen nicht vorhandene Blöcke, Items und Statistiken ausblenden oder sinnvoll kennzeichnen |
@@ -87,7 +88,7 @@ Der Schwerpunkt liegt auf:
             └── Optional: Medaillenprofil eines Spielers
 ```
 
-Das Menüsystem soll visuell einheitlich und selbsterklärend sein. Ein Wechsel zur Bestenliste muss **direkt aus dem Statistik-Hauptmenü** möglich sein. Von jeder Unterseite führt ein Zurück-Button zur jeweils vorherigen Menüebene.
+Das Menüsystem soll visuell einheitlich und selbsterklärend sein. Ein Wechsel zur Bestenliste muss **direkt aus dem Statistik-Hauptmenü** möglich sein. Von jeder Unterseite führt ein Zurück-Button zur jeweils vorherigen Menüebene. Wenn möglich sollte Tab-Autocomplete auch offline Spieler anzeigen.
 
 ### 4.2 Grundregeln für jede Inventaransicht
 
@@ -197,6 +198,8 @@ Serverweit abgebaut: 1.284.651
 🥈 SpielerB  –  302.100
 🥉 SpielerC  –  227.450
 
+"Kommentar: Wenn der EIGENE Name nicht unter den Top 3 ist, dann soll ... POSITION - DEIN NAME - BLÖCKE stehen"
+
 Klicken: komplette Rangliste anzeigen  (optional)
 ```
 
@@ -241,7 +244,7 @@ Bei gleicher Gesamtzahl erfolgt die Sortierung nach **Gold > Silber > Bronze**, 
 | 2 | SpielerB | 30 | 18 | 14 | **62** |
 | 3 | SpielerC | 21 | 24 | 11 | **56** |
 
-Die Beispielzahlen sind fiktiv. Im GUI bietet sich pro Spieler ein Kopf-Item mit Name, Gesamtzahl und Aufschlüsselung der Medaillen in der Lore an. Auch dieses Ranking muss **blätterbar** sein. Optional kann ein Spielerprofil anzeigen, **für welche konkreten Statistiken** die Medaillen gewonnen wurden.
+Die Beispielzahlen sind fiktiv. Im GUI bietet sich pro Spieler sein jeweiliges Kopf-Item mit Name, Gesamtzahl und Aufschlüsselung der Medaillen in der Lore an. Auch dieses Ranking muss **blätterbar** sein. Optional kann ein Spielerprofil anzeigen, **für welche konkreten Statistiken** die Medaillen gewonnen wurden.
 
 ## 9. Spielzeit und Fortbewegung
 
@@ -349,24 +352,8 @@ Diese Ideen sind nicht Teil der Pflichtfunktionen, passen aber zum datenbasierte
 6. **Medaillenprofil** mit Auflistung aller Gold-, Silber- und Bronzewertungen eines Spielers.
 7. **Konfigurierbare Kategorienamen, Item-Icons, Farben und Lore-Texte** sowie optional englische Übersetzungen.
 
-## 14. Separate optionale Ideen, die **zusätzliches Tracking bzw. historische Snapshots** benötigen
 
-Diese Funktionen sind ausdrücklich **optional** und dürfen die Grundanforderung „kein eigenes Gameplay-Tracking“ nicht aufweichen. Einige davon benötigen nur regelmäßige gespeicherte **Snapshots der Vanilla-Zähler**, andere echte Event-Erfassung.
-
-| Idee | Zusätzliche Datenerfassung | Nutzen |
-|---|---|---|
-| Tages-, Wochen- und Monats-Leaderboards | Regelmäßige historische Statistik-Snapshots | Zeigt Zugewinne in einem Zeitraum statt Lebenszeitwerte. |
-| Statistik-Verlauf als Diagramm | Historische Snapshots | Zeigt die Entwicklung von Spielzeit, Abbau oder Kills. |
-| Rekorde seit Serverstart / Saisonstart | Gespeicherte Startstände oder Snapshots | Trennt Gesamthistorie von saisonalen Wettbewerben. |
-| „Größter Fortschritt heute“ | Tägliche Vergleichssnapshots | Spieler mit den größten absoluten Steigerungen. |
-| Meilenstein-Benachrichtigungen | Regelmäßiger Vergleich von Zählerständen oder Ereignisüberwachung | Meldet bestimmte Schwellenwerte, z. B. 100.000 abgebaute Blöcke. |
-| Exakte Session-Länge und Join-Verlauf | Join-/Quit-Erfassung oder Session-Speicherung | Gibt einzelne Logins und Sitzungsdauern wieder. |
-| Exakte Blockplatzierungs- oder Spezialaktions-Statistiken, die Vanilla nicht separat zählt | Eigene Gameplay-Event-Listener | Ergänzt fehlende Vanilla-Metriken. |
-| Historische Bestleistungen mit Zeitpunkt | Snapshots oder Ereignisprotokoll | Hält fest, wann ein Rekord erreicht oder gebrochen wurde. |
-
-**Empfehlung:** Zunächst das Plugin vollständig **ohne eigenes Gameplay-Tracking** implementieren. Erweiterungen als optionale Module gestalten; eine Snapshot-Funktion darf nicht erforderlich sein, damit die normalen Statistiken oder Medaillen korrekt funktionieren.
-
-## 15. Abnahmekriterien / Testfälle
+## 14. Abnahmekriterien / Testfälle
 
 Die Implementierung gilt erst als fertig, wenn mindestens diese Fälle erfolgreich getestet sind:
 
@@ -391,7 +378,7 @@ Die Implementierung gilt erst als fertig, wenn mindestens diese Fälle erfolgrei
 - [ ] Folia-Scheduler, asynchrone Aktualisierungen und Menüs funktionieren ohne Thread-Sicherheitsfehler.
 - [ ] Kompatibilität auf **26.3** und **mindestens 1.18** ist durch reale Tests belegt.
 
-## 16. Fachliche Referenzen
+## 15. Fachliche Referenzen
 
 Diese Quellen dienen zur technischen Einordnung und für die konkreten Pfeilkopf-Texturen:
 

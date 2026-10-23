@@ -1,0 +1,19 @@
+name: SkyStats
+version: '${project.version}'
+main: de.skystats.SkyStatsPlugin
+api-version: '1.18'
+description: Vanilla-Statistiken, Bestenlisten und Medaillen
+folia-supported: ${folia.supported}
+commands:
+  stats:
+    description: Öffnet Vanilla-Statistiken und Server-Bestenlisten.
+    usage: /stats [Spieler]
+    permission: stats.use
+    permission-message: '§cDu darfst keine Statistiken öffnen.'
+permissions:
+  stats.use:
+    description: Eigene Statistiken und Bestenlisten ansehen.
+    default: true
+  stats.others:
+    description: Statistiken anderer bekannter Spieler ansehen.
+    default: true

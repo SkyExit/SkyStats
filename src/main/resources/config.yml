@@ -1,0 +1,13 @@
+# Empty selects the primary world's stats directory, exactly once across dimensions.
+stats-directory: ''
+hide-zero-values: true
+cache-seconds: 30
+refresh-cooldown-seconds: 5
+# Live reads are spread over entity ticks to avoid a large single-tick API scan.
+live-reads-per-tick: 400
+live-read-timeout-seconds: 30
+max-file-size-mib: 16
+max-player-files: 100000
+max-statistics-per-player: 100000
+# Bounds the complete sparse dataset before allocating ranking indexes.
+max-total-values: 2000000

@@ -1,0 +1,9 @@
+/.tools/
+/.test-servers/
+/target/
+/.idea/
+*.iml
+*.log
+.DS_Store
+__pycache__/
+*.py[cod]
