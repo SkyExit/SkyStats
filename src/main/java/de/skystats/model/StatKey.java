@@ -21,6 +21,9 @@ public record StatKey(String type, String id) implements Comparable<StatKey> {
         return type.equals("minecraft:custom") && (id.endsWith("_time") || id.equals("minecraft:time_since_death") || id.equals("minecraft:time_since_rest"));
     }
     public boolean isPlayTime() { return type.equals("minecraft:custom") && id.equals("minecraft:play_time"); }
+    public boolean isPlayerEntity() {
+        return (type.equals("minecraft:killed") || type.equals("minecraft:killed_by")) && id.equals("minecraft:player");
+    }
     public boolean isDamage() { return type.equals("minecraft:custom") && id.startsWith("minecraft:damage_"); }
     public String technicalName() { return type + " / " + id; }
     @Override public int compareTo(StatKey other) {

@@ -49,6 +49,7 @@ def main():
     compression = False
     send_lock = threading.Lock()
     window_id = None
+    window_body = b""
 
     def read(size):
         data = b""
@@ -69,6 +70,11 @@ def main():
     def attacks():
         marker = pathlib.Path(sys.argv[3]) / "network-ready.txt"
         while not marker.exists() or window_id is None:
+            time.sleep(0.05)
+        # Fast personal loads can open the final menu before this client has
+        # consumed its Open Screen packet. Wait for the intended window title.
+        expected_title = marker.read_text(encoding="utf-8").encode()
+        while expected_title not in window_body:
             time.sleep(0.05)
         # These packets exercise the real container transaction path, including
         # the cursor, bottom inventory, hotbar swap, offhand, drop and collect.
@@ -126,6 +132,7 @@ def main():
         elif not modern:
             if packet_id == 0x2e:
                 window_id = read_varint(io.BytesIO(body).read)
+                window_body = body
             elif packet_id == 0x21:
                 send(0x0f, body)
             elif packet_id == 0x38:
@@ -136,6 +143,7 @@ def main():
         else:
             if packet_id == 60:
                 window_id = read_varint(io.BytesIO(body).read)
+                window_body = body
             elif packet_id == 45:
                 send(28, body)
             elif packet_id == 73:

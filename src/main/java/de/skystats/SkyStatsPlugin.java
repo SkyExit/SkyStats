@@ -44,11 +44,11 @@ public final class SkyStatsPlugin extends JavaPlugin implements Listener, Comman
     }
     private int positive(String key, int fallback, int maximum) { return Math.max(1, Math.min(maximum, getConfig().getInt(key, fallback))); }
     @Override public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        if (!(sender instanceof Player player)) { sender.sendMessage("Dieser Befehl kann nur im Spiel verwendet werden."); return true; }
-        if (!player.hasPermission("stats.use")) { player.sendMessage("§cDu darfst keine Statistiken öffnen."); return true; }
-        if (args.length > 1) { player.sendMessage("§eVerwendung: /stats [Spieler]"); return true; }
+        if (!(sender instanceof Player player)) { sender.sendMessage("This command can only be used in game."); return true; }
+        if (!player.hasPermission("stats.use")) { player.sendMessage("§cYou do not have permission to view statistics."); return true; }
+        if (args.length > 1) { player.sendMessage("§eUsage: /stats [player]"); return true; }
         if (args.length == 1 && !player.hasPermission("stats.others") && !args[0].equalsIgnoreCase(player.getName()) && !args[0].equalsIgnoreCase(player.getUniqueId().toString())) {
-            player.sendMessage("§cDu darfst keine Statistiken anderer Spieler öffnen."); return true;
+            player.sendMessage("§cYou do not have permission to view other players' statistics."); return true;
         }
         menus.command(player, args.length == 0 ? null : args[0]);
         return true;

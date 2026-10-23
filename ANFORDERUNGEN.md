@@ -1,3 +1,12 @@
+> Current target: v2.2.0-BETA. This document preserves the original German brief.
+> The v2.2.0 changes in README.md take precedence: English plugin text; separate
+> Items used / Blocks placed; no General or additional-statistics menu; distinct
+> Combat, Interactions and Activities; all time counters; player entities excluded
+> from mob views and medal competitions; scope borders and 35 content slots;
+> personal loading independent of server rankings. Vanilla item-use counters do
+> not distinguish planting from eating the same item, so edible planting items
+> remain under Items used.
+>
 # Minecraft-Statistik-Plugin – Anforderungsspezifikation
 
 > **Projektstatus:** Konzept / funktionale Spezifikation  

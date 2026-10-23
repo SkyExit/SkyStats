@@ -46,7 +46,7 @@ public final class StatCatalog {
             String type = TYPED_IDS.getOrDefault(statistic.name(), statistic.getKey().getKey());
             if (statistic.getType() == Statistic.Type.ENTITY) {
                 for (EntityType entity : EntityType.values()) {
-                    if (entity == EntityType.UNKNOWN || entity.getKey() == null) continue;
+                    if (entity == EntityType.UNKNOWN || entity == EntityType.PLAYER || entity.getKey() == null) continue;
                     collected.add(new Entry(new StatKey("minecraft:" + type, entity.getKey().toString()), statistic, null, entity));
                 }
             } else {

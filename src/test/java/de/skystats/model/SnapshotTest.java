@@ -45,7 +45,17 @@ class SnapshotTest {
     }
     @Test void groupingDoesNotDuplicateCompetitions() {
         Snapshot result = snapshot(player("Anna", Map.of(WALK, 100L)));
-        assertTrue(Category.GENERAL.contains(WALK)); assertTrue(Category.MOVEMENT.contains(WALK));
+        assertEquals(1, Arrays.stream(Category.values()).filter(category -> category.contains(WALK)).count());
+        assertTrue(Category.MOVEMENT.contains(WALK));
+        assertEquals(1, result.medals().get(0).total());
+    }
+    @Test void playerEntitiesNeverCreateHiddenMobCompetitions() {
+        StatKey killed = new StatKey("minecraft:killed", "minecraft:player");
+        StatKey killedBy = new StatKey("minecraft:killed_by", "minecraft:player");
+        StatKey playerKills = new StatKey("minecraft:custom", "minecraft:player_kills");
+        Snapshot result = snapshot(player("Anna", Map.of(killed, 5L, killedBy, 10L, playerKills, 5L)));
+        assertEquals(Set.of(playerKills), result.keys());
+        assertTrue(result.ranking(killed).isEmpty());
         assertEquals(1, result.medals().get(0).total());
     }
     @Test void usesLongTotalsAndSaturatesInsteadOfOverflowing() {

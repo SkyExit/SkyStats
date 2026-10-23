@@ -55,7 +55,7 @@ public final class StatsService implements AutoCloseable {
         if (cached != null && ((!refresh && Duration.between(cached.createdAt(), now).compareTo(cacheDuration) < 0)
                 || Duration.between(lastAttempt, now).compareTo(minimumRefresh) < 0)) return CompletableFuture.completedFuture(cached);
         if (cached == null && Duration.between(lastAttempt, now).compareTo(minimumRefresh) < 0) {
-            return CompletableFuture.failedFuture(new IllegalStateException("Bitte warte kurz vor dem nächsten Ladeversuch."));
+            return CompletableFuture.failedFuture(new IllegalStateException("Please wait before trying to load again."));
         }
         lastAttempt = now;
         Map<UUID, Player> capturedOnline = Map.copyOf(online);
@@ -78,13 +78,29 @@ public final class StatsService implements AutoCloseable {
 
     public CompletableFuture<PlayerStats> personal(UUID uuid, Snapshot snapshot) {
         Player player = online.get(uuid);
-        PlayerStats disk = snapshot.players().get(uuid);
+        PlayerStats disk = snapshot == null ? null : snapshot.players().get(uuid);
         if (player != null) return readLive(uuid, player, disk);
         return compute(() -> {
             Path file = directory.resolve(uuid + ".json");
             if (!Files.isRegularFile(file)) return null;
             try { return new PlayerStats(uuid, names.name(uuid), reader.read(file)); }
             catch (IOException error) { throw new CompletionException(error); }
+        });
+    }
+
+    /** Personal menus never wait for a server-wide scan or its leaderboards. */
+    public CompletableFuture<PlayerStats> personal(UUID uuid) {
+        Snapshot snapshot = cached;
+        if (snapshot != null || !online.containsKey(uuid)) return personal(uuid, snapshot);
+        // Preserve unsupported Vanilla IDs from disk on the first live read as well.
+        return compute(() -> {
+            Path file = directory.resolve(uuid + ".json");
+            if (!Files.isRegularFile(file)) return null;
+            try { return new PlayerStats(uuid, names.name(uuid), reader.read(file)); }
+            catch (IOException error) { throw new CompletionException(error); }
+        }).thenCompose(disk -> {
+            Player player = online.get(uuid);
+            return player == null ? personal(uuid, null) : readLive(uuid, player, disk);
         });
     }
 
@@ -131,10 +147,10 @@ public final class StatsService implements AutoCloseable {
                     }
                     if (totalValues > maxTotalValues) throw new IOException("Dataset limit exceeded; increase max-total-values");
                 }
-                if (failed > 0) warnings.add(failed + " fehlerhafte Statistikdatei(en) ausgelassen");
+                if (failed > 0) warnings.add(failed + " invalid statistics file(s) skipped");
             } catch (IOException error) { throw new CompletionException(error); }
         } else {
-            warnings.add("Statistikordner nicht gefunden: " + directory);
+            warnings.add("Statistics directory not found: " + directory);
             logger.warning("Statistics directory not found: " + directory + "; check stats-directory in config.yml");
         }
         return new DiskData(players, warnings);

@@ -1,36 +1,62 @@
 package de.skystats.model;
 
 public enum Category {
-    GENERAL("Allgemein", "Allgemeine Statistiken", "BOOK", "custom", "Wert"),
-    MINED("Abgebaute Blöcke", "Abgebaute Blöcke", "IRON_PICKAXE", "mined", "Abgebaut"),
-    CRAFTED("Hergestellte Items", "Hergestellte Items", "CRAFTING_TABLE", "crafted", "Hergestellt"),
-    USED("Benutzte Items", "Benutzte Items / platzierte Blöcke", "OAK_PLANKS", "used", "Benutzt"),
-    BROKEN("Zerbrochene Items", "Zerbrochene / verbrauchte Items", "ANVIL", "broken", "Zerbrochen"),
-    PICKED_UP("Aufgehobene Items", "Aufgehobene Items", "HOPPER", "picked_up", "Aufgehoben"),
-    DROPPED("Weggeworfene Items", "Weggeworfene Items", "DROPPER", "dropped", "Weggeworfen"),
-    KILLED("Getötete Kreaturen", "Getötete Kreaturen", "IRON_SWORD", "killed", "Getötet"),
-    KILLED_BY("Tode durch Kreaturen", "Von Kreaturen getötet", "SKELETON_SKULL", "killed_by", "Tode durch diese Kreatur"),
-    MOVEMENT("Fortbewegung", "Fortbewegung", "LEATHER_BOOTS", "custom", "Strecke"),
-    PLAY_TIME("Spielzeit", "Spielzeit", "CLOCK", "custom", "Spielzeit"),
-    OTHER("Weitere Statistiken", "Weitere Vanilla-Statistiken", "PAPER", "", "Wert");
+    MINED("Blocks mined", "IRON_PICKAXE", "Mined"),
+    CRAFTED("Items crafted", "CRAFTING_TABLE", "Crafted"),
+    USED("Items used", "FLINT_AND_STEEL", "Used"),
+    PLACED("Blocks placed", "BRICKS", "Placed"),
+    BROKEN("Items broken", "ANVIL", "Broken"),
+    PICKED_UP("Items picked up", "HOPPER", "Picked up"),
+    DROPPED("Items dropped", "DROPPER", "Dropped"),
+    KILLED("Mobs killed", "IRON_SWORD", "Killed"),
+    KILLED_BY("Killed by mobs", "SKELETON_SKULL", "Deaths caused"),
+    MOVEMENT("Movement", "LEATHER_BOOTS", "Distance"),
+    PLAY_TIME("Play time", "CLOCK", "Time"),
+    COMBAT("Combat", "SHIELD", "Value"),
+    INTERACTIONS("Interactions", "CHEST", "Interactions"),
+    ACTIVITIES("Activities", "FISHING_ROD", "Value");
 
-    private final String shortName, title, icon, type, valueLabel;
-    Category(String shortName, String title, String icon, String type, String valueLabel) {
-        this.shortName = shortName; this.title = title; this.icon = icon; this.type = type; this.valueLabel = valueLabel;
+    private final String title, icon, valueLabel;
+    Category(String title, String icon, String valueLabel) {
+        this.title = title; this.icon = icon; this.valueLabel = valueLabel;
     }
-    public String shortName() { return shortName; }
+    public String shortName() { return title; }
     public String title() { return title; }
     public String icon() { return icon; }
     public String valueLabel() { return valueLabel; }
-    public boolean contains(StatKey key) {
-        if (this == MOVEMENT) return key.isDistance();
-        if (this == PLAY_TIME) return key.isPlayTime();
-        if (this == OTHER) {
-            for (Category category : values()) {
-                if (category != OTHER && category.contains(key)) return false;
+
+    public boolean contains(StatKey key) { return forKey(key) == this; }
+
+    /** Each statistic has exactly one category; player entities are never mob entries. */
+    public static Category forKey(StatKey key) {
+        return switch (key.type()) {
+            case "minecraft:mined" -> MINED;
+            case "minecraft:crafted" -> CRAFTED;
+            case "minecraft:used" -> BlockItems.isPlacement(key.id()) ? PLACED : USED;
+            case "minecraft:broken" -> BROKEN;
+            case "minecraft:picked_up" -> PICKED_UP;
+            case "minecraft:dropped" -> DROPPED;
+            case "minecraft:killed" -> key.isPlayerEntity() ? null : KILLED;
+            case "minecraft:killed_by" -> key.isPlayerEntity() ? null : KILLED_BY;
+            case "minecraft:custom" -> {
+                if (key.isDistance()) yield MOVEMENT;
+                if (key.isTime()) yield PLAY_TIME;
+                if (key.isDamage() || switch (key.id()) {
+                    case "minecraft:deaths", "minecraft:mob_kills", "minecraft:player_kills",
+                         "minecraft:raid_trigger", "minecraft:raid_win", "minecraft:target_hit" -> true;
+                    default -> false;
+                }) yield COMBAT;
+                String path = key.id().substring(key.id().indexOf(':') + 1);
+                if (path.startsWith("interact_with_") || path.startsWith("open_") || path.startsWith("inspect_")
+                        || path.startsWith("clean_") || switch (path) {
+                    case "talk_to_villager", "traded_with_villager", "fill_cauldron", "use_cauldron",
+                         "play_noteblock", "tune_noteblock", "pot_flower", "trigger_trapped_chest",
+                         "enchant_item", "play_record", "bell_ring" -> true;
+                    default -> false;
+                }) yield INTERACTIONS;
+                yield ACTIVITIES;
             }
-            return true;
-        }
-        return key.type().equals("minecraft:" + type);
+            default -> ACTIVITIES;
+        };
     }
 }

@@ -88,7 +88,7 @@ class StatsServiceTest {
     @Test void reportsMissingDirectoryInsteadOfSilentlyShowingOnlyOnlinePlayers() throws Exception {
         try (StatsService service = service(1000)) {
             Snapshot snapshot = service.snapshot(false).get(3, TimeUnit.SECONDS);
-            assertTrue(snapshot.warnings().stream().anyMatch(warning -> warning.contains("Statistikordner")));
+            assertTrue(snapshot.warnings().stream().anyMatch(warning -> warning.contains("Statistics directory")));
         }
     }
     @Test void offlineProfileResolutionRunsOnDataWorkerAndFeedsAllViews() throws Exception {
@@ -133,5 +133,41 @@ class StatsServiceTest {
         StatsService service = service(1000); service.joined(player);
         service.personal(uuid, Snapshot.aggregate(Map.of(), List.of())); service.close();
         assertTrue(pending.isCancelled()); assertTrue(service.snapshot(false).isCompletedExceptionally());
+    }
+
+    @Test void personalReadsFinishWhileAnotherPlayersServerReadIsStillPendingAndStayFresh() throws Exception {
+        Player other = mock(Player.class); UUID otherId = UUID.randomUUID();
+        when(other.getUniqueId()).thenReturn(otherId); when(other.getName()).thenReturn("Other");
+        CompletableFuture<PlayerStats> blocked = new CompletableFuture<>();
+        CountDownLatch serverReadStarted = new CountDownLatch(1);
+        when(live.read(eq(other), any())).thenAnswer(call -> { serverReadStarted.countDown(); return blocked; });
+        UUID offline = UUID.randomUUID(); file(offline, 100);
+        try (StatsService service = service(1000)) {
+            service.joined(other);
+            CompletableFuture<Snapshot> server = service.snapshot(false);
+            assertTrue(serverReadStarted.await(3, TimeUnit.SECONDS));
+            assertEquals(100, service.personal(offline).get(3, TimeUnit.SECONDS).value(STONE));
+            file(offline, 250);
+            assertEquals(250, service.personal(offline).get(3, TimeUnit.SECONDS).value(STONE));
+            assertFalse(server.isDone());
+            assertNull(service.cached());
+            blocked.complete(new PlayerStats(otherId, "Other", Map.of(STONE, 50L)));
+            assertEquals(150, server.get(3, TimeUnit.SECONDS).total(STONE));
+        }
+    }
+
+    @Test void onlinePersonalReadsStartWithoutASnapshotAndAreRepeatedAfterCompletion() throws Exception {
+        Player player = mock(Player.class); UUID uuid = UUID.randomUUID(); file(uuid, 1);
+        when(player.getUniqueId()).thenReturn(uuid); when(player.getName()).thenReturn("Online");
+        when(live.read(eq(player), any())).thenReturn(
+                CompletableFuture.completedFuture(new PlayerStats(uuid, "Online", Map.of(STONE, 100L))),
+                CompletableFuture.completedFuture(new PlayerStats(uuid, "Online", Map.of(STONE, 200L))));
+        try (StatsService service = service(1000)) {
+            service.joined(player);
+            assertEquals(100, service.personal(uuid).get(3, TimeUnit.SECONDS).value(STONE));
+            assertEquals(200, service.personal(uuid).get(3, TimeUnit.SECONDS).value(STONE));
+            assertNull(service.cached());
+            verify(live, times(2)).read(eq(player), any());
+        }
     }
 }

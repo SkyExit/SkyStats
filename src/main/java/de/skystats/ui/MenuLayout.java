@@ -9,7 +9,6 @@ public final class MenuLayout {
 
     public static int slot(Category category) {
         return switch (category) {
-            case GENERAL -> 4;
             case MINED -> 10;
             case CRAFTED -> 12;
             case USED -> 14;
@@ -20,7 +19,15 @@ public final class MenuLayout {
             case KILLED_BY -> 30;
             case MOVEMENT -> 32;
             case PLAY_TIME -> 34;
-            case OTHER -> 40;
+            case PLACED -> 3;
+            case COMBAT -> 5;
+            case INTERACTIONS -> 39;
+            case ACTIVITIES -> 41;
         };
+    }
+
+    public static int contentSlot(int index) {
+        if (index < 0 || index >= Page.CONTENT_SIZE) throw new IndexOutOfBoundsException(index);
+        return index / 7 * 9 + index % 7 + 1;
     }
 }

@@ -24,7 +24,7 @@ class PlayerDirectoryTest {
     @Test void preservesUnknownUuidsForDirectLookup() {
         UUID uuid = UUID.randomUUID(); PlayerDirectory names = new PlayerDirectory(root.resolve("players.json"));
         names.publish(Set.of(uuid)); assertEquals(List.of(uuid), names.find(uuid.toString()));
-        assertEquals("Unbekannt (" + uuid.toString().substring(0, 8) + ")", names.name(uuid));
+        assertEquals("Unknown (" + uuid.toString().substring(0, 8) + ")", names.name(uuid));
         assertTrue(names.complete("").isEmpty());
         assertTrue(names.find(uuid.toString().substring(0, 8)).isEmpty());
     }
@@ -79,7 +79,7 @@ class PlayerDirectoryTest {
             PlayerDirectory names = new PlayerDirectory(persisted, ignored -> result);
             List<String> warnings = new ArrayList<>();
             names.resolve(uuid, warnings); names.publish(Set.of(uuid)); names.save();
-            assertTrue(names.name(uuid).startsWith("Unbekannt ("));
+            assertTrue(names.name(uuid).startsWith("Unknown ("));
             assertEquals(List.of(uuid), names.find(uuid.toString()));
             assertTrue(names.complete("").isEmpty());
             assertEquals("{}", Files.readString(persisted));

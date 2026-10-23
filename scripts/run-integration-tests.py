@@ -59,6 +59,8 @@ def fixtures(server, version):
         stats = {"minecraft:mined": {"minecraft:stone": stone}, "minecraft:custom": {f"minecraft:probe_{index}": 1}}
         if name == "OfflineA":
             stats["minecraft:mined"].update({f"minecraft:probe_block_{i}": 1 for i in range(50)})
+            stats["minecraft:killed"] = {"minecraft:player": 99, "minecraft:zombie": 5}
+            stats["minecraft:killed_by"] = {"minecraft:player": 9, "minecraft:zombie": 2}
         (directory / f"{ident}.json").write_text(json.dumps({"stats": stats, "DataVersion": 2975}))
     (directory / f"{uuid.uuid4()}.json").write_text('{"stats":')
     (server / "usercache.json").write_text(json.dumps(cache))

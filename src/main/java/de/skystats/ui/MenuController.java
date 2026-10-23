@@ -37,25 +37,28 @@ public final class MenuController {
         tasks.entity(viewer, () -> {
             heads.remember(viewer);
             StatsHolder loading = loading(viewer, Route.main(), null);
-            service.snapshot(false).thenCompose(snapshot -> {
-                UUID target;
-                if (targetName == null) target = viewer.getUniqueId();
-                else {
-                    List<UUID> found = service.names().find(targetName);
-                    if (found.isEmpty()) throw new CompletionException(new IllegalArgumentException("Unbekannter Spieler oder noch keine gespeicherten Statistiken vorhanden."));
-                    if (found.size() > 1) throw new CompletionException(new IllegalArgumentException("Dieser Name gehört zu mehreren UUIDs. Bitte verwende /stats <UUID>."));
-                    target = found.get(0);
-                }
-                return service.personal(target, snapshot).thenApply(stats -> {
-                    if (stats == null) throw new CompletionException(new IllegalArgumentException("Noch keine Statistiken vorhanden."));
-                    return new StatsHolder.Context(snapshot, stats);
-                });
+            CompletableFuture<UUID> target = targetName == null ? CompletableFuture.completedFuture(viewer.getUniqueId())
+                    : resolveTarget(targetName);
+            target.thenCompose(service::personal).thenApply(stats -> {
+                    if (stats == null) throw new CompletionException(new IllegalArgumentException("No statistics available yet."));
+                    return new StatsHolder.Context(null, stats);
             }).whenComplete((context, error) -> tasks.entity(viewer, () -> {
                 if (!current(viewer, loading)) return;
                 if (error != null) failure(viewer, loading, error);
                 else render(viewer, Route.main(), context, List.of());
             }, () -> {}));
         }, () -> {});
+    }
+
+    private CompletableFuture<UUID> resolveTarget(String name) {
+        List<UUID> known = service.names().find(name);
+        // Only an unknown name during the initial name-index load needs the server scan.
+        return (known.isEmpty() ? service.snapshot(false).thenApply(snapshot -> service.names().find(name))
+                : CompletableFuture.completedFuture(known)).thenApply(found -> {
+            if (found.isEmpty()) throw new IllegalArgumentException("Unknown player or no saved statistics available yet.");
+            if (found.size() > 1) throw new IllegalArgumentException("This name belongs to multiple UUIDs. Please use /stats <UUID>.");
+            return found.get(0);
+        });
     }
 
     public boolean current(Player player, StatsHolder holder) {
@@ -75,6 +78,12 @@ public final class MenuController {
         StatsHolder holder = new StatsHolder(viewer.getUniqueId(), route, context, rows);
         holder.attach(Bukkit.createInventory(holder, 54, title));
         for (int i = 45; i < 54; i++) holder.getInventory().setItem(i, item(Material.GRAY_STAINED_GLASS_PANE, " ", List.of()));
+        if (context != null) {
+            ViewScope scope = ViewScope.of(route, viewer.getUniqueId(), context.target().uuid());
+            for (int row = 0; row < 5; row++) for (int column : new int[] {0, 8}) {
+                holder.getInventory().setItem(row * 9 + column, item(scope.border(), "§e" + scope.label(), List.of()));
+            }
+        }
         return holder;
     }
     private void show(Player viewer, StatsHolder holder) {
@@ -82,25 +91,34 @@ public final class MenuController {
         active.put(viewer.getUniqueId(), holder);
     }
     private StatsHolder loading(Player viewer, Route route, StatsHolder.Context context) {
-        StatsHolder holder = inventory(viewer, route, context, List.of(), "Lädt: " + route.title());
-        holder.getInventory().setItem(22, item(Material.CLOCK, "§eStatistiken werden geladen …", List.of("§7Vanilla-Daten werden gelesen.")));
-        holder.getInventory().setItem(49, item(Material.PAPER, "§eBitte warten", List.of("§7Dateien und Ranglisten werden asynchron geladen.")));
-        if (context != null && route.parent() != null) button(holder, 48, item(Material.OAK_DOOR, "§eZurück", List.of()), () -> navigate(viewer, route.parent(), context));
+        StatsHolder holder = inventory(viewer, route, context, List.of(), "Loading: " + route.title());
+        holder.getInventory().setItem(22, item(Material.CLOCK, "§eLoading statistics ...", List.of("§7Reading Vanilla data.")));
+        holder.getInventory().setItem(49, item(Material.PAPER, "§ePlease wait", List.of("§7Loading data ...")));
+        if (context != null && route.parent() != null) button(holder, 48, item(Material.OAK_DOOR, "§eBack", List.of()), () -> navigate(viewer, route.parent(), context));
         show(viewer, holder);
         return holder;
     }
     private void failure(Player viewer, StatsHolder loading, Throwable error) {
         Throwable cause = error;
         while (cause.getCause() != null) cause = cause.getCause();
-        String message = cause instanceof IllegalArgumentException ? cause.getMessage() : "Statistiken konnten nicht geladen werden. Bitte erneut versuchen.";
+        String message = cause instanceof IllegalArgumentException ? cause.getMessage() : "Could not load statistics. Please try again.";
         if (!(cause instanceof IllegalArgumentException)) plugin.getLogger().warning("Statistics request failed: " + cause);
-        loading.getInventory().setItem(22, item(Material.BARRIER, "§cKeine Anzeige möglich", List.of("§7" + message)));
-        loading.getInventory().setItem(49, item(Material.PAPER, "§cLaden fehlgeschlagen", List.of("§7Schließe das Menü und versuche /stats erneut.")));
+        loading.getInventory().setItem(22, item(Material.BARRIER, "§cUnable to display statistics", List.of("§7" + message)));
+        loading.getInventory().setItem(49, item(Material.PAPER, "§cLoading failed", List.of("§7Close this menu and try /stats again.")));
         viewer.sendMessage("§c" + message);
     }
 
     private void navigate(Player viewer, Route route, StatsHolder.Context context) {
-        if (route.mode() == Route.Mode.MAIN || route.mode() == Route.Mode.SERVER) { render(viewer, route, context, List.of()); return; }
+        if (route.mode() == Route.Mode.SERVER) {
+            StatsHolder loading = loading(viewer, route, context);
+            service.snapshot(false).whenComplete((snapshot, error) -> tasks.entity(viewer, () -> {
+                if (!current(viewer, loading)) return;
+                if (error != null) failure(viewer, loading, error);
+                else render(viewer, route, new StatsHolder.Context(snapshot, context.target()), List.of());
+            }, () -> {}));
+            return;
+        }
+        if (route.mode() == Route.Mode.MAIN) { render(viewer, route, context, List.of()); return; }
         StatsHolder loading = loading(viewer, route, context);
         service.compute(() -> rows(route, context)).whenComplete((rows, error) -> tasks.entity(viewer, () -> {
             if (!current(viewer, loading)) return;
@@ -114,8 +132,9 @@ public final class MenuController {
                 boolean server = route.mode() == Route.Mode.SERVER_CATEGORY;
                 Set<StatKey> keys = new HashSet<>(server ? snapshot.keys() : context.target().values().keySet());
                 if (!hideZeros) keys.addAll(catalog.keys());
+                if (route.category() == Category.PLAY_TIME) catalog.keys().stream().filter(StatKey::isTime).forEach(keys::add);
                 yield keys.stream().filter(route.category()::contains)
-                        .filter(key -> !hideZeros || (server ? snapshot.total(key) : context.target().value(key)) > 0)
+                        .filter(key -> !hideZeros || route.category() == Category.PLAY_TIME || (server ? snapshot.total(key) : context.target().value(key)) > 0)
                         .sorted(Comparator.<StatKey>comparingLong(key -> server ? snapshot.total(key) : context.target().value(key)).reversed().thenComparing(Comparator.naturalOrder())).toList();
             }
             case RANKING -> snapshot.ranking(route.key());
@@ -129,12 +148,18 @@ public final class MenuController {
     private void refresh(Player viewer, StatsHolder holder) {
         long now = System.nanoTime();
         Long previous = refreshTimes.get(viewer.getUniqueId());
-        if (previous != null && now - previous < refreshCooldownNanos) { viewer.sendMessage("§eBitte warte kurz vor der nächsten Aktualisierung."); return; }
+        if (previous != null && now - previous < refreshCooldownNanos) { viewer.sendMessage("§ePlease wait before refreshing again."); return; }
         refreshTimes.put(viewer.getUniqueId(), now);
         Route route = holder.route();
         StatsHolder loading = loading(viewer, route, holder.context());
-        service.snapshot(true).thenCompose(snapshot -> service.personal(holder.context().target().uuid(), snapshot)
-                .thenApply(target -> new StatsHolder.Context(snapshot, target == null ? holder.context().target() : target)))
+        StatsHolder.Context previousContext = holder.context();
+        CompletableFuture<StatsHolder.Context> refreshed = route.serverView() || route.mode() == Route.Mode.PROFILE
+                ? service.snapshot(true).thenApply(snapshot -> new StatsHolder.Context(snapshot, previousContext.target()))
+                : service.personal(previousContext.target().uuid()).thenApply(target -> {
+                    if (target == null) throw new IllegalArgumentException("No statistics available yet.");
+                    return new StatsHolder.Context(previousContext.snapshot(), target);
+                });
+        refreshed
                 .whenComplete((context, error) -> tasks.entity(viewer, () -> {
                     if (!current(viewer, loading)) return;
                     if (error != null) failure(viewer, loading, error); else navigate(viewer, route, context);
@@ -146,35 +171,44 @@ public final class MenuController {
         route = route.page(page.index());
         Route here = route;
         String viewedName = context.target().name();
-        if (route.subject() != null && context.snapshot().players().containsKey(route.subject())) viewedName = context.snapshot().players().get(route.subject()).name();
-        StatsHolder holder = inventory(viewer, route, context, rows, route.title() + " | " + viewedName);
+        if (route.subject() != null && context.snapshot() != null && context.snapshot().players().containsKey(route.subject())) viewedName = context.snapshot().players().get(route.subject()).name();
+        ViewScope scope = ViewScope.of(route, viewer.getUniqueId(), context.target().uuid());
+        String title = scope == ViewScope.SERVER ? route.title() + " | Server"
+                : route.title() + " | " + (scope == ViewScope.PERSONAL ? "You: " : "Player: ") + viewedName;
+        StatsHolder holder = inventory(viewer, route, context, rows, title);
         if (route.mode() == Route.Mode.MAIN || route.mode() == Route.Mode.SERVER) {
             boolean server = route.mode() == Route.Mode.SERVER;
-            for (int slot = 0; slot < 45; slot++) holder.getInventory().setItem(slot, item(Material.BLACK_STAINED_GLASS_PANE, " ", List.of()));
+            for (int index = 0; index < Page.CONTENT_SIZE; index++) holder.getInventory().setItem(MenuLayout.contentSlot(index), item(Material.BLACK_STAINED_GLASS_PANE, " ", List.of()));
             for (int slot : new int[] {13, 21, 23, 31}) holder.getInventory().setItem(slot, item(Material.CYAN_STAINED_GLASS_PANE, " ", List.of()));
             for (Category category : Category.values()) {
                 Route child = here.child(server ? Route.Mode.SERVER_CATEGORY : Route.Mode.PERSONAL_CATEGORY, category, null, null);
-                button(holder, MenuLayout.slot(category), item(Material.valueOf(category.icon()), "§b" + category.title(), server ? List.of("§7Serverweit, inklusive Offline-Spieler", "§eKlicken: öffnen") : List.of("§eKlicken: öffnen")), () -> navigate(viewer, child, context));
+                List<String> description = new ArrayList<>(List.of("§7" + scope.label()));
+                if (category == Category.PLACED) description.add("§7Block placements and planting.");
+                if (category == Category.USED) description.add("§7Tools, food, buckets and other item uses.");
+                if (server) description.add("§7Including offline players");
+                description.add("§eClick to open");
+                button(holder, MenuLayout.slot(category), item(Material.valueOf(category.icon()), "§b" + category.title(), description), () -> navigate(viewer, child, context));
             }
-            if (server) button(holder, MenuLayout.CENTER, item(Material.GOLD_INGOT, "§6Medaillen-Ranking", List.of("§7Gesamtzahl, dann Gold / Silber / Bronze", "§7Gleichstände: 1, 1, 3; Nullwerte ohne Medaille")), () -> navigate(viewer, here.child(Route.Mode.MEDALS, null, null, null), context));
-            else button(holder, MenuLayout.CENTER, item(Material.GOLD_BLOCK, "§6Server-Leaderboards", List.of("§7Alle bekannten Spieler, auch offline", "§eKlicken: Bestenlisten und Medaillen")), () -> navigate(viewer, here.child(Route.Mode.SERVER, null, null, null), context));
+            if (server) button(holder, MenuLayout.CENTER, item(Material.GOLD_INGOT, "§6Medal ranking", List.of("§7Total medals, then gold / silver / bronze", "§7Ties: 1, 1, 3; zero values earn no medals")), () -> navigate(viewer, here.child(Route.Mode.MEDALS, null, null, null), context));
+            else button(holder, MenuLayout.CENTER, item(Material.GOLD_BLOCK, "§6Server leaderboards", List.of("§7All known players, including offline players", "§eClick for leaderboards and medals")), () -> navigate(viewer, here.child(Route.Mode.SERVER, null, null, null), context));
         } else {
-            for (int i = page.from(); i < page.to(); i++) renderRow(viewer, holder, i - page.from(), rows.get(i));
-            if (rows.isEmpty()) holder.getInventory().setItem(22, item(Material.PAPER, "§eNoch keine Statistiken vorhanden", List.of("§7Keine passenden positiven Vanilla-Werte.")));
+            for (int i = page.from(); i < page.to(); i++) renderRow(viewer, holder, MenuLayout.contentSlot(i - page.from()), rows.get(i));
+            if (rows.isEmpty()) holder.getInventory().setItem(22, item(Material.PAPER, "§eNo statistics available yet", List.of("§7No matching positive Vanilla values.")));
         }
-        if (page.hasPrevious()) button(holder, 45, decorate(heads.arrow(false), "§eVorherige Seite", List.of()), () -> render(viewer, here.page(page.index() - 1), context, rows));
-        if (page.hasNext()) button(holder, 53, decorate(heads.arrow(true), "§eNächste Seite", List.of()), () -> render(viewer, here.page(page.index() + 1), context, rows));
-        button(holder, 48, item(Material.OAK_DOOR, route.parent() == null ? "§eSchließen" : "§eZurück", List.of()), () -> {
+        if (page.hasPrevious()) button(holder, 45, decorate(heads.arrow(false), "§ePrevious page", List.of()), () -> render(viewer, here.page(page.index() - 1), context, rows));
+        if (page.hasNext()) button(holder, 53, decorate(heads.arrow(true), "§eNext page", List.of()), () -> render(viewer, here.page(page.index() + 1), context, rows));
+        button(holder, 48, item(Material.OAK_DOOR, route.parent() == null ? "§eClose" : "§eBack", List.of()), () -> {
             if (here.parent() == null) viewer.closeInventory(); else navigate(viewer, here.parent(), context);
         });
-        List<String> status = new ArrayList<>(List.of("§7" + route.title(),
-                "§7Einträge: " + ValueFormatter.number(rows.size()),
-                "§7Server-Stand: " + DateTimeFormatter.ofPattern("HH:mm:ss").withZone(ZoneId.systemDefault()).format(context.snapshot().createdAt()),
-                "§7Live-Werte werden über mehrere Ticks gelesen."));
-        context.snapshot().warnings().stream().limit(5).forEach(warning -> status.add("§e" + warning));
+        List<String> status = new ArrayList<>(List.of("§7" + scope.label(), "§7" + route.title(),
+                "§7Entries: " + ValueFormatter.number(rows.size())));
+        if (scope == ViewScope.SERVER || route.mode() == Route.Mode.PROFILE) {
+            status.add("§7Server snapshot: " + DateTimeFormatter.ofPattern("HH:mm:ss").withZone(ZoneId.systemDefault()).format(context.snapshot().createdAt()));
+            context.snapshot().warnings().stream().limit(5).forEach(warning -> status.add("§e" + warning));
+        } else status.add("§7Personal values read when opened or refreshed.");
         if (route.key() != null) status.add("§8" + route.key().technicalName());
-        holder.getInventory().setItem(49, item(Material.PAPER, "§bSeite " + (page.index() + 1) + " / " + page.count(), status));
-        button(holder, 50, item(Material.SUNFLOWER, "§aAktualisieren", List.of("§7Vanilla-Daten erneut laden", "§7Serverweiter Cache schützt vor häufigen Berechnungen.")), () -> refresh(viewer, holder));
+        holder.getInventory().setItem(49, item(Material.PAPER, "§bPage " + (page.index() + 1) + " / " + page.count(), status));
+        button(holder, 50, item(Material.SUNFLOWER, "§aRefresh", List.of("§7Reload Vanilla data", "§7Server rankings use the configured cache and cooldown.")), () -> refresh(viewer, holder));
         show(viewer, holder);
     }
 
@@ -184,34 +218,34 @@ public final class MenuController {
         if (row instanceof StatKey key) {
             List<String> lore = new ArrayList<>();
             boolean server = route.mode() == Route.Mode.SERVER_CATEGORY;
-            lore.add("§7" + (server ? "Serverweit – " : "") + route.category().valueLabel() + ": §f" + ValueFormatter.format(key, server ? context.snapshot().total(key) : context.target().value(key)));
+            lore.add("§7" + (server ? "Server total - " : "") + route.category().valueLabel() + ": §f" + ValueFormatter.format(key, server ? context.snapshot().total(key) : context.target().value(key)));
             if (server) {
-                lore.add("§7Spieler: alle bekannten UUIDs");
+                lore.add("§7Players: all known UUIDs");
                 lore.add("");
                 List<Snapshot.RankedPlayer> leaders = context.snapshot().ranking(key).stream().limit(3).toList();
                 leaders.forEach(player -> lore.add(placement(player, key)));
                 Snapshot.RankedPlayer own = context.snapshot().position(key, viewer.getUniqueId());
                 if (leaders.stream().noneMatch(player -> player.uuid().equals(viewer.getUniqueId()))) {
                     lore.add("");
-                    lore.add(own == null ? "§e–. " + viewer.getName() + " – " + ValueFormatter.format(key, 0) : "§eDein Rang: " + placement(own, key));
+                    lore.add(own == null ? "§e–. " + viewer.getName() + " – " + ValueFormatter.format(key, 0) : "§eYour rank: " + placement(own, key));
                 }
-                lore.add(""); lore.add("§eKlicken: komplette Rangliste");
+                lore.add(""); lore.add("§eClick for full leaderboard");
                 holder.action(slot, () -> navigate(viewer, route.child(Route.Mode.RANKING, route.category(), key, null), context));
             }
             lore.add("§8" + key.technicalName());
             ItemStack icon = new ItemStack(labels.icon(key));
-            boolean defaultName = !labels.hasLabel(key) && icon.getType() != Material.PAPER;
+            boolean defaultName = labels.usesItemName(key);
             holder.getInventory().setItem(slot, decorate(icon, defaultName ? null : "§b" + labels.name(key), lore));
         } else if (row instanceof Snapshot.RankedPlayer player) {
             playerHead(viewer, holder, slot, player.uuid(), player.name(), medalColor(player.rank()) + "#" + player.rank() + " " + player.name(),
-                    List.of("§7Wert: §f" + ValueFormatter.format(route.key(), player.value()), "§7" + medalName(player.rank()), "§8" + player.uuid(), "§8" + route.key().technicalName()));
+                    List.of("§7Value: §f" + ValueFormatter.format(route.key(), player.value()), "§7" + medalName(player.rank()), "§8" + player.uuid(), "§8" + route.key().technicalName()));
         } else if (row instanceof Snapshot.Medals medals) {
             playerHead(viewer, holder, slot, medals.uuid(), medals.name(), "§b#" + medals.rank() + " " + medals.name(),
-                    List.of("§fGesamt: " + ValueFormatter.number(medals.total()), "§6Gold: " + medals.gold(), "§7Silber: " + medals.silver(), "§cBronze: " + medals.bronze(), "§eKlicken: Medaillenprofil", "§8" + medals.uuid()));
+                    List.of("§fTotal: " + ValueFormatter.number(medals.total()), "§6Gold: " + medals.gold(), "§7Silver: " + medals.silver(), "§cBronze: " + medals.bronze(), "§eClick for medal profile", "§8" + medals.uuid()));
             holder.action(slot, () -> navigate(viewer, route.child(Route.Mode.PROFILE, null, null, medals.uuid()), context));
         } else if (row instanceof Award award) {
-            button(holder, slot, decorate(new ItemStack(labels.icon(award.key())), medalColor(award.placement().rank()) + medalName(award.placement().rank()) + " – " + labels.name(award.key()),
-                    List.of("§7Wert: " + ValueFormatter.format(award.key(), award.placement().value()), "§8" + award.key().technicalName(), "§eKlicken: komplette Rangliste")),
+            button(holder, slot, decorate(new ItemStack(labels.icon(award.key())), labels.usesItemName(award.key()) ? null : "§b" + labels.name(award.key()),
+                    List.of(medalColor(award.placement().rank()) + medalName(award.placement().rank()), "§7Value: " + ValueFormatter.format(award.key(), award.placement().value()), "§8" + award.key().technicalName(), "§eClick for full leaderboard")),
                     () -> navigate(viewer, route.child(Route.Mode.RANKING, null, award.key(), null), context));
         }
     }
@@ -228,7 +262,7 @@ public final class MenuController {
 
     private static String placement(Snapshot.RankedPlayer player, StatKey key) { return medalColor(player.rank()) + player.rank() + ". " + player.name() + " – " + ValueFormatter.format(key, player.value()) + (player.rank() <= 3 ? " [" + medalName(player.rank()) + "]" : ""); }
     private static String medalColor(int rank) { return rank == 1 ? "§6" : rank == 2 ? "§f" : rank == 3 ? "§c" : "§7"; }
-    private static String medalName(int rank) { return rank == 1 ? "Gold" : rank == 2 ? "Silber" : rank == 3 ? "Bronze" : "Keine Medaille"; }
+    private static String medalName(int rank) { return rank == 1 ? "Gold" : rank == 2 ? "Silver" : rank == 3 ? "Bronze" : "No medal"; }
     private static void button(StatsHolder holder, int slot, ItemStack item, Runnable action) { holder.getInventory().setItem(slot, item); holder.action(slot, action); }
     private static ItemStack item(Material material, String name, List<String> lore) { return decorate(new ItemStack(material), name, lore); }
     private static ItemStack decorate(ItemStack item, String name, List<String> lore) {

@@ -1,97 +1,153 @@
 # SkyStats
 
-Inventarbasierte Vanilla-Statistiken für Paper und Folia, standardmäßig auf Deutsch. Das Plugin liest bestehende Zähler und zählt keine Spielereignisse mit.
+Vanilla statistics, leaderboards and medals in inventory menus for Paper and Folia.
+All plugin text is English. Minecraft item and spawn-egg names use the player's
+client language. SkyStats reads existing statistics and never counts gameplay events.
 
-## Verwendung
+## v2.2.0-BETA
 
-- `/stats` öffnet die eigenen Statistiken.
-- `/stats <Name>` öffnet ein bekanntes Online- oder Offline-Profil.
-- `/stats <UUID>` löst mehrdeutige Namen auf, etwa nach einem Wechsel von `online-mode`.
-- `stats.use` und `stats.others` sind standardmäßig für alle Spieler freigegeben.
+- Reviewed icons for every supported custom statistic: strider spawn egg, elytra,
+  boat, minecart, mounts, workstations, combat, activities and timers.
+- Separate **Items used** and **Blocks placed** categories.
+- Removed the general-statistics menu and the empty additional-statistics button.
+  Custom values now belong to Movement, Play time, Combat, Interactions or Activities.
+- Player entities are excluded from both mob categories and their medal competitions.
+  The separate Vanilla Player kills statistic remains available under Combat.
+- Play time includes time since last death, time since last rest, world-open time
+  and time sneaking. Timers remain visible at zero and display seconds.
+- Emerald borders mark your statistics, diamond borders another player's statistics,
+  and gold-ingot borders server statistics. Titles and information items identify
+  the scope as well.
+- Personal menus load independently of server aggregation. Personal refresh only
+  reloads that profile; server rankings are requested when entering the server view.
 
-Das Hauptmenü ordnet zwölf Statistik-Kategorien in einem symmetrischen Rahmen um den zentralen Zugang zu Server-Bestenlisten an. Die Serverübersicht verwendet dieselbe Anordnung mit dem Medaillenranking in der Mitte. Jede Ansicht hat 54 Slots; die untere Reihe bleibt für Zurück, Aktualisieren, Seitenanzeige und die beiden Pfeilköpfe aus Eichenholz reserviert. Einzelranglisten und Medaillenprofile sind ebenfalls enthalten.
+## Commands and menus
 
-In persönlichen Ansichten und Medaillenprofilen steht der Spielername ausschließlich im Inventartitel. Das gilt für die eigenen Statistiken und die anderer Spieler; Kategorien, Statistik-Items und Seiteninformationen wiederholen den Namen nicht.
+- `/stats` opens your statistics.
+- `/stats <name>` opens a known online or offline player's statistics.
+- `/stats <UUID>` resolves ambiguous names, including after online-mode changes.
+- `stats.use` and `stats.others` are granted to everyone by default.
 
-Bei Einzelstatistiken teilen Gleichstände den Wettkampfplatz (`1, 1, 3`). Nur positive Werte erhalten Medaillen. Das Medaillenranking sortiert nach Gesamtzahl, anschließend Gold, Silber und Bronze. Identische Medaillenbilanzen teilen ihren Rang; Namen und UUIDs stabilisieren die Anzeigereihenfolge. Zusätzliche Ansichten für Fortbewegung und Spielzeit erzeugen keine doppelten Wettbewerbe.
+The main menu contains fourteen categories around the server-leaderboard button.
+The server menu uses the same layout with medal rankings in the center.
+Each inventory has 54 slots: 35 entries, ten side-border items, and nine navigation
+slots. Textured wooden arrow heads switch pages; Back and Refresh retain their
+positions. Player names appear in inventory titles, and in ranking entries where
+they identify competitors.
 
-## Bauen und installieren
+Personal categories sort by that player's values. Server categories sort by totals
+over all known UUIDs, including offline players, and show the top three plus your
+own position. Click a server statistic to open its full ranking. Medal profiles
+show the individual statistics behind a player's awards.
 
-Zum Bauen sind Java 17 oder neuer sowie `bash`, `curl`, `tar` und `sha512sum` erforderlich. Der erste Build lädt Maven und Abhängigkeiten in das ignorierte Verzeichnis `.tools/`:
+Ties use competition ranks (`1, 1, 3`). Only positive values earn medals.
+Medal rankings sort by total awards, then gold, silver and bronze; equal medal
+counts share ranks. Each underlying statistic awards medals exactly once.
 
-```bash
-./mvnw clean verify
-```
+## Item uses and placements
 
-Die installierbare Datei liegt unter `target/SkyStats-2.1.1-BETA.jar`. Die bisherige SkyStats-JAR im `plugins/`-Verzeichnis damit ersetzen und den Server neu starten. Externe Plugins werden nicht benötigt; Gson wird isoliert in die JAR eingebettet. Der Code wird gegen Spigot 1.18.2 kompiliert und verwendet Java-17-Bytecode. Neuere Scheduler- und Profil-APIs werden über öffentliche Versionsadapter angesprochen.
+Vanilla stores both under `minecraft:used`. SkyStats splits those existing keys:
+block items and dedicated planting items (such as seeds, cocoa beans, redstone
+and string) appear under Blocks placed. Tools, buckets, boats, armor, food and
+other items appear under Items used. The same key never appears in both categories.
 
-| Getesteter Server mit v2.1.1-BETA | Java | Ergebnis |
-| --- | --- | --- |
-| Paper 26.3, Build 190 | 25.0.3 | Integrationssuite bestanden |
-| Folia 26.3, Build 3 | 25.0.3 | Integrationssuite bestanden |
+Vanilla does not separate different actions using the same item. Edible planting
+items such as carrots, potatoes and berries therefore remain under Items used;
+their counters cannot reliably identify how many were planted. Buckets likewise
+remain item uses. No historical placement counts are invented and no new gameplay
+tracking is introduced.
 
-Zwischenversionen werden durch die dynamische API-Erkennung berücksichtigt; die Tabelle benennt die für diese Version tatsächlich geprüften Builds. Für v2.0.0-BETA waren außerdem erfolgreiche Läufe auf Paper 1.18 (Build 66) und 1.18.2 (Build 388) dokumentiert; diese älteren Server wurden für v2.1.1-BETA nicht erneut gestartet. Folia existiert für 1.18 nicht. `folia-supported: true` ist durch den aktuellen Folia-Test abgedeckt. Für Installation und Aktualisierung einen regulären Server-Neustart verwenden.
+## Build and install
 
-## Konfiguration und Daten
-
-Die Datei `plugins/SkyStats/config.yml` enthält:
-
-| Einstellung | Standard | Bedeutung |
-| --- | --- | --- |
-| `stats-directory` | leer | Automatisch die gemeinsame Statistikablage der ersten Serverwelt auswählen |
-| `hide-zero-values` | `true` | Persönliche und serverweite Nullwerte ausblenden |
-| `cache-seconds` | `30` | Gültigkeit einer Server-Momentaufnahme |
-| `refresh-cooldown-seconds` | `5` | Mindestabstand aufwendiger Neuberechnungen und persönlicher Aktualisierungen |
-| `live-reads-per-tick` | `400` | Maximale Statistikabfragen pro Spieler und Tick je laufender Abfrage |
-| `live-read-timeout-seconds` | `30` | Zeitlimit für Live-Abfragen |
-| `max-file-size-mib` | `16` | Größenlimit einer Statistikdatei |
-| `max-player-files` | `100000` | Limit für Spielerdateien je Berechnung |
-| `max-statistics-per-player` | `100000` | Limit für Einträge einer Statistikdatei |
-| `max-total-values` | `2000000` | Grenze der gesamten positiven Datenmenge vor dem Aufbau der Ranglisten |
-
-Bei abweichender Weltverwaltung kann `stats-directory` relativ zum Weltcontainer oder absolut angegeben werden. Bei leerer Einstellung erkennt das Plugin die klassische Ablage `world/stats` und die seit Minecraft 26.1 verwendete Ablage `world/players/stats`. Auch ein Weltpfad wie `world/dimensions/minecraft/overworld` wird auf diesen gemeinsamen Speicherort zurückgeführt. Die moderne Ablage hat Vorrang vor einem zurückgebliebenen alten Ordner; es wird immer genau ein Statistikordner gelesen. Ein fehlender Ordner wird im Log und als Hinweis in der GUI angezeigt. Wurde `stats-directory` zuvor ausdrücklich auf den alten Pfad gesetzt, muss die Einstellung geleert oder auf den neuen Pfad angepasst werden. Die Namensdatei `usercache.json` wird direkt aus dem Serververzeichnis gelesen, auch bei einem abweichenden Weltcontainer.
-
-Online-Daten werden auf dem zuständigen Entity-Scheduler gelesen und ersetzen den Dateistand derselben UUID. Offline-Profile werden asynchron aus Vanilla-JSON geladen. Die Server-Auswertung ist eine über mehrere Spielerticks entstandene Momentaufnahme; der Abschlusszeitpunkt steht im Info-Item. Persönliche Werte werden beim Öffnen erneut eingelesen. Dateien mit fehlerhaftem JSON werden ausgelassen und in der GUI als Hinweis ausgewiesen. Bei einem Verbindungsabbruch während einer Live-Abfrage schlägt dieser Ladevorgang nachvollziehbar fehl und kann erneut gestartet werden.
-
-Fehlt ein Offline-Name sowohl im Plugin-Cache als auch in `usercache.json`, liest das Plugin über die Bukkit-API den letzten Namen aus den gespeicherten Server-Spielerdaten. Diese Auflösung läuft im Daten-Worker und wird für spätere Starts gespeichert. Einzelne ungültige Namenscache-Einträge verhindern das Einlesen gültiger Einträge nicht. Ohne verfügbaren Namen erscheint `Unbekannt (<UUID-Anfang>)`; solche Platzhalter werden nicht als Spielernamen vervollständigt oder gespeichert. Die vollständige UUID bleibt für `/stats <UUID>` verwendbar.
-
-Das Plugin schreibt ausschließlich seine Konfiguration und die UUID-Namenszuordnung in `plugins/SkyStats/players.json`. Vanilla-Statistiken werden nicht verändert. Nicht bekannte IDs bleiben mit technischer Kennung und Ersatzicon erreichbar. Minecraft-Items behalten nach Möglichkeit ihren vom Client übersetzten Namen; allgemeine Kennzahlen und Menütexte sind deutsch. Für Spielerköpfe werden vorhandene Login-Skins wiederverwendet und fehlende Skins über öffentliche Profil-APIs asynchron aufgelöst. Der begrenzte Cache hält erfolgreiche Auflösungen 30 Minuten und fehlgeschlagene Versuche eine Minute. Auf Servern mit Offline-UUIDs erfolgt die Skin-Suche nach Spielernamen; die Statistik-UUID bleibt erhalten. Nachgeladene Köpfe werden nur im weiterhin geöffneten Menü ersetzt. Ohne erreichbares Skin-Profil bleibt ein normales Kopf-Icon verwendbar. Die beiden Holzpfeiltexturen sind fest eingebettet und benötigen keine Head-Database-Anbindung.
-
-## Lokale Testserver
-
-Python 3.12 oder neuer wird für die Einrichtung und die Integrationstests benötigt. Die folgenden Befehle laden offizielle Server-Builds sowie passende Temurin-Laufzeiten mit Prüfsummenprüfung. Alle Laufzeiten, Server, Welten und Logs liegen in den ignorierten Verzeichnissen `.tools/` und `.test-servers/`:
-
-```bash
-python3 scripts/setup-test-servers.py --include-paper-1.18
-```
-
-Ohne ausdrückliche Zustimmung bleibt `eula=false`. Nach Zustimmung zur [Minecraft-EULA](https://www.minecraft.net/eula) kann die Einrichtung mit `--accept-eula` aufgerufen werden. Im Rahmen dieser Implementierung wurde die Zustimmung bereits erteilt und lokal eingetragen.
-
-```bash
-.test-servers/paper-26.3/start.sh
-```
-
-| Instanz | Adresse |
-| --- | --- |
-| Paper 26.3 | `127.0.0.1:25565` |
-| Folia 26.3 | `127.0.0.1:25566` |
-| Paper 1.18.2 | `127.0.0.1:25568` |
-| Paper 1.18 | `127.0.0.1:25569` |
-
-Die Testinstanzen binden ausschließlich an die lokale Adresse und verwenden für automatisierte Testspieler `online-mode=false`. Die Integrationstests sind für diese lokalen Testwelten vorgesehen und erzeugen dort absichtlich synthetische Spieler und Statistiken.
+Java 17 or newer is required. The wrapper also requires Bash, curl, tar and
+sha512sum, and downloads Maven and dependencies into the ignored `.tools/` folder:
 
 ```bash
 ./mvnw verify
-python3 scripts/run-integration-tests.py paper-1.18 paper-1.18.2 paper-26.3 folia-26.3
 ```
 
-Die Suite baut ein separates Prüfplugin, startet jeden Server, verbindet einen Python-Testclient und stoppt den Server anschließend geordnet. Das Prüfplugin gehört nicht zur ausgelieferten SkyStats-JAR. Ergebnisse und Logs liegen pro Instanz in `probe-result.txt`, `integration-console.log` und `integration-client.log`; zusammengefasste Ergebnisse stehen in `target/integration-results.txt`. Details der Abdeckung stehen in [TESTING.md](TESTING.md).
+Install `target/SkyStats-2.2.0-BETA.jar` in the server's `plugins/` folder,
+replacing the previous SkyStats JAR, and restart the server normally.
+No other plugins are required. Gson is shaded into an isolated package.
+The plugin compiles against Spigot 1.18.2 with Java 17 bytecode; newer public
+scheduler and profile APIs are accessed through compatibility adapters.
 
-## Aufbau
+| Server | Java | Verification |
+| --- | --- | --- |
+| Paper 26.3, build 190 | 25.0.3 | See TESTING.md |
+| Folia 26.3, build 3 | 25.0.3 | See TESTING.md |
 
-- `model`: UUID-basierte Daten, Einheiten, Wettbewerbsränge und einmalige Medaillenvergabe.
-- `data`: dynamischer Statistik-Katalog, JSON-Lesen, Namensauflösung und begrenzter Cache mit gemeinsam genutzten Ladeaufträgen.
-- `platform`: öffentliche Scheduler-Adapter für klassische Server und Folia.
-- `ui`: Holder-basierte Inventare, Seitennavigation, Profilköpfe und strikt abgebrochene Inventaraktionen.
+Earlier releases were also tested on Paper 1.18 build 66 and Paper 1.18.2 build 388.
+Those older servers have not been rerun for v2.2.0-BETA. Folia has no 1.18 release.
 
-Referenzen: [Spigot Statistic API](https://hub.spigotmc.org/javadocs/spigot/org/bukkit/Statistic.html), [Paper/Folia Scheduler](https://docs.papermc.io/paper/dev/folia-support/), [World Storage seit 26.1](https://feedback.minecraft.net/hc/en-us/articles/44551668333837-Minecraft-Java-Edition-26-1), [Oak Wood Arrow Left 2762](https://minecraft-heads.com/custom-heads/head/2762-oak-wood-arrow-left), [Oak Wood Arrow Right 2763](https://minecraft-heads.com/custom-heads/head/2763-oak-wood-arrow-right).
+## Configuration
+
+`plugins/SkyStats/config.yml` contains:
+
+| Setting | Default | Purpose |
+| --- | --- | --- |
+| `stats-directory` | empty | Detect the primary world's shared statistics directory |
+| `hide-zero-values` | `true` | Hide zero values, except the Play time timers |
+| `cache-seconds` | `30` | Server-snapshot lifetime |
+| `refresh-cooldown-seconds` | `5` | Minimum interval between expensive rebuilds and personal refreshes |
+| `live-reads-per-tick` | `400` | Maximum statistic API reads per player per tick in a pending request |
+| `live-read-timeout-seconds` | `30` | Timeout for live reads |
+| `max-file-size-mib` | `16` | Per-file size limit |
+| `max-player-files` | `100000` | Player-file limit per rebuild |
+| `max-statistics-per-player` | `100000` | Per-file entry limit |
+| `max-total-values` | `2000000` | Sparse-dataset limit before ranking allocation |
+
+Statistics paths may be absolute or relative to the world container. Automatic
+detection supports both `world/stats` and the modern `world/players/stats` layout.
+Dimension paths resolve to shared world storage. Modern storage takes precedence
+over leftover legacy folders, and a single directory is read.
+Clear an explicitly configured legacy path when migrating to modern storage.
+The server-root `usercache.json` is read independently of the world container.
+
+## Freshness and data handling
+
+Each personal opening or refresh rereads offline JSON or scans the online player's
+live statistics on their entity scheduler. Personal requests do not wait for other
+players or server leaderboards. Only an unresolved player name during initial
+indexing may need the first server scan to finish.
+
+Server snapshots are still cached, timestamped and protected by the configured
+refresh cooldown. Online values replace the same UUID's disk values exactly once.
+Live reads are spread across ticks; snapshots represent a sampling interval.
+An initial server snapshot is prepared in the background at startup.
+Navigation inside an open profile uses that profile's loaded values until Refresh.
+
+JSON reads, sorting and aggregation run on data workers. Invalid files are skipped
+with English warnings in server views. Missing directories, limits, disconnected
+players and timeouts produce a visible error or warning. Unsupported statistic
+IDs retain a readable fallback name and their technical ID. Known blocks without
+inventory forms use corresponding items; mobs use spawn eggs or suitable alternatives.
+
+Names missing from both caches are resolved through saved Bukkit player profiles
+on a data worker and persisted in `plugins/SkyStats/players.json`.
+Unknown names display as `Unknown (<UUID prefix>)`; placeholders are never saved
+as names or offered in tab completion. UUID remains the primary identity.
+
+SkyStats writes only configuration and its name cache. Vanilla statistics are
+never changed. Player heads reuse login skins and resolve missing profiles
+asynchronously, with bounded successful/failed caches. Late skin or data results
+only update the still-open inventory. Navigation-arrow textures are embedded.
+
+## Tests
+
+`./mvnw verify` runs unit and regression tests. The separate integration suite
+uses disposable local Paper/Folia worlds and a real network client:
+
+```bash
+python scripts/setup-test-servers.py --include-paper-1.18
+python scripts/run-integration-tests.py paper-1.18 paper-1.18.2 paper-26.3 folia-26.3
+```
+
+The setup script leaves `eula=false` until the Minecraft EULA is explicitly
+accepted. Existing local instances already have acceptance recorded.
+Test instances bind only to localhost, use offline mode for synthetic identities
+and contain deliberately generated statistics. They stop after testing.
+See [TESTING.md](TESTING.md) for results, coverage and local Windows commands.
+
+References: [Spigot Statistic API](https://hub.spigotmc.org/javadocs/spigot/org/bukkit/Statistic.html),
+[Paper/Folia scheduling](https://docs.papermc.io/paper/dev/folia-support/).

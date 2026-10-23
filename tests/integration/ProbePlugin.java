@@ -2,6 +2,7 @@ package de.skystats.probe;
 
 import de.skystats.SkyStatsPlugin;
 import de.skystats.data.StatsService;
+import de.skystats.data.StatCatalog;
 import de.skystats.model.*;
 import de.skystats.platform.TaskBridge;
 import de.skystats.ui.*;
@@ -58,10 +59,32 @@ public final class ProbePlugin extends JavaPlugin implements Listener {
         player.setStatistic(Statistic.MINE_BLOCK, Material.DIRT, 20);
         player.setStatistic(Statistic.JUMP, 7);
         player.setStatistic(Statistic.PLAY_ONE_MINUTE, (12 * 1440 + 6 * 60 + 14) * 1200);
+        player.setStatistic(Statistic.TIME_SINCE_DEATH, 2400);
+        player.setStatistic(Statistic.TIME_SINCE_REST, 3600);
+        player.setStatistic(Statistic.USE_ITEM, Material.STONE, 12);
+        player.setStatistic(Statistic.USE_ITEM, Material.WHEAT_SEEDS, 3);
+        player.setStatistic(Statistic.USE_ITEM, Material.DIAMOND_PICKAXE, 9);
+        player.setStatistic(Statistic.USE_ITEM, Material.OAK_BOAT, 4);
+        player.setStatistic(Statistic.STRIDER_ONE_CM, 2000);
+        player.setStatistic(Statistic.AVIATE_ONE_CM, 10000);
+        player.setStatistic(Statistic.KILL_ENTITY, org.bukkit.entity.EntityType.ZOMBIE, 2);
         player.performCommand("stats");
         waitFor(() -> menu(Route.Mode.MAIN), () -> {
             check(holder().getInventory().getSize() == 54, "own-54-slot-menu");
             personalNameOnlyInTitle("StatsTester", "own-main");
+            scopeBorder(Material.EMERALD, "own-scope");
+            check(holder().context().snapshot() == null, "personal-menu-independent-of-server-snapshot");
+            Labels labels = new Labels();
+            for (StatKey key : new StatCatalog().keys()) {
+                check(Arrays.stream(Category.values()).filter(category -> category.contains(key)).count() == 1, "runtime-category-" + key.technicalName(), false);
+                if (key.type().equals("minecraft:custom")) {
+                    check(labels.hasLabel(key) && labels.icon(key) != Material.PAPER, "runtime-label-and-icon-" + key.id(), false);
+                }
+                if (key.type().equals("minecraft:mined")) {
+                    check(labels.icon(key) != Material.PAPER, "runtime-block-icon-" + key.id(), false);
+                }
+            }
+            passed.add("all-runtime-statistics-categorized-and-custom-icons-reviewed");
             check(type(MenuLayout.CENTER) == Material.GOLD_BLOCK, "centered-leaderboard-button");
             for (Category category : Category.values()) check(type(MenuLayout.slot(category)) == Material.valueOf(category.icon()), "category-layout-" + category);
             Set<Integer> slots = new HashSet<>();
@@ -72,13 +95,51 @@ public final class ProbePlugin extends JavaPlugin implements Listener {
             click(MenuLayout.slot(Category.MINED));
             waitFor(() -> menu(Route.Mode.PERSONAL_CATEGORY), () -> {
                 check(holder().route().category() == Category.MINED, "mined-category-mapping");
-                check(type(0) == Material.STONE && lore(0).contains("100"), "live-values-and-personal-sorting");
+                check(type(MenuLayout.contentSlot(0)) == Material.STONE && lore(MenuLayout.contentSlot(0)).contains("100"), "live-values-and-personal-sorting");
                 personalNameOnlyInTitle("StatsTester", "own-category");
                 click(48);
-                waitFor(() -> menu(Route.Mode.MAIN), this::offline);
+                waitFor(() -> menu(Route.Mode.MAIN), this::updatedCategories);
             });
             });
         });
+    }
+    private void updatedCategories() {
+        openCategory(Category.MOVEMENT, () -> {
+            check(type(statSlot("minecraft:strider_one_cm")) == Material.STRIDER_SPAWN_EGG, "strider-spawn-egg");
+            check(type(statSlot("minecraft:aviate_one_cm")) == Material.ELYTRA, "elytra-icon");
+            check(name(statSlot("minecraft:strider_one_cm")).equals("Distance by strider"), "english-custom-label");
+            click(48); waitFor(() -> menu(Route.Mode.MAIN), () -> openCategory(Category.PLAY_TIME, () -> {
+                check(type(statSlot("minecraft:time_since_death")) == Material.TOTEM_OF_UNDYING, "time-since-death");
+                check(type(statSlot("minecraft:time_since_rest")) == Material.RED_BED, "time-since-rest");
+                click(48); waitFor(() -> menu(Route.Mode.MAIN), () -> openCategory(Category.PLACED, () -> {
+                    check(statSlot("minecraft:stone") >= 0 && statSlot("minecraft:wheat_seeds") >= 0, "placements-and-seeds");
+                    check(statSlot("minecraft:diamond_pickaxe") < 0, "tools-excluded-from-placements");
+                    var stone = holder().getInventory().getItem(statSlot("minecraft:stone")).getItemMeta();
+                    check(!stone.hasDisplayName(), "minecraft-item-name-left-for-client-translation");
+                    click(48); waitFor(() -> menu(Route.Mode.MAIN), () -> openCategory(Category.USED, () -> {
+                        check(statSlot("minecraft:diamond_pickaxe") >= 0 && statSlot("minecraft:oak_boat") >= 0, "tools-and-entity-items-used");
+                        check(statSlot("minecraft:stone") < 0 && statSlot("minecraft:wheat_seeds") < 0, "placements-excluded-from-items-used");
+                        click(48); waitFor(() -> menu(Route.Mode.MAIN), this::offline);
+                    }));
+                }));
+            }));
+        });
+    }
+    private void openCategory(Category category, Runnable next) {
+        click(MenuLayout.slot(category));
+        waitFor(() -> menu(Route.Mode.PERSONAL_CATEGORY) && holder().route().category() == category, next);
+    }
+    private int statSlot(String id) {
+        for (int i = 0; i < holder().rows().size() && i < Page.CONTENT_SIZE; i++) {
+            if (holder().rows().get(i) instanceof StatKey key && key.id().equals(id)) return MenuLayout.contentSlot(i);
+        }
+        return -1;
+    }
+    private void scopeBorder(Material material, String label) {
+        for (int row = 0; row < 5; row++) for (int column : new int[] {0, 8}) {
+            check(type(row * 9 + column) == material, label, false);
+        }
+        passed.add(label);
     }
     private void networkAttacks(Runnable next) {
         player.getInventory().setItem(0, new ItemStack(Material.DIAMOND, 5));
@@ -89,8 +150,9 @@ public final class ProbePlugin extends JavaPlugin implements Listener {
         ItemStack cursorBefore = player.getItemOnCursor().clone();
         ItemStack[] guiBefore = holder().getInventory().getContents();
         networkPhase = true;
+        String expectedTitle = player.getOpenInventory().getTitle();
         CompletableFuture.runAsync(() -> {
-            try { Files.writeString(Path.of("network-ready.txt"), "ready"); }
+            try { Files.writeString(Path.of("network-ready.txt"), expectedTitle); }
             catch (Exception error) { fail(error.toString()); }
         });
         waitFor(() -> networkClicks >= 10, () -> tasks.entityLater(player, () -> protect(() -> {
@@ -112,9 +174,10 @@ public final class ProbePlugin extends JavaPlugin implements Listener {
         waitFor(() -> menu(Route.Mode.MAIN) && holder().context().target().name().equals("OfflineA"), () -> {
             passed.add("offline-player-lookup");
             personalNameOnlyInTitle("OfflineA", "offline-main");
+            scopeBorder(Material.DIAMOND, "other-player-scope");
             click(MenuLayout.slot(Category.MINED));
             waitFor(() -> menu(Route.Mode.PERSONAL_CATEGORY), () -> {
-                check(type(0) == Material.STONE && lore(0).contains("1.000"), "offline-file-value");
+                check(type(MenuLayout.contentSlot(0)) == Material.STONE && lore(MenuLayout.contentSlot(0)).contains("1,000"), "offline-file-value");
                 personalNameOnlyInTitle("OfflineA", "offline-category");
                 check(type(53) == Material.PLAYER_HEAD, "next-page-player-head");
                 check(textured(53), "next-head-texture");
@@ -125,15 +188,31 @@ public final class ProbePlugin extends JavaPlugin implements Listener {
                     personalNameOnlyInTitle("OfflineA", "offline-category-second-page");
                     click(45);
                     waitFor(() -> menu(Route.Mode.PERSONAL_CATEGORY) && holder().route().page() == 0, () -> {
-                        click(48); waitFor(() -> menu(Route.Mode.MAIN), this::server);
+                    click(48); waitFor(() -> menu(Route.Mode.MAIN), this::offlineDetails);
                     });
                 });
             });
         });
     }
+    private void offlineDetails() {
+        openCategory(Category.PLAY_TIME, () -> {
+            check(lore(statSlot("minecraft:time_since_rest")).contains("0d 0h 0m 0s"), "zero-rest-timer-visible");
+            check(lore(statSlot("minecraft:time_since_death")).contains("0d 0h 0m 0s"), "zero-death-timer-visible");
+            click(48); waitFor(() -> menu(Route.Mode.MAIN), () -> openCategory(Category.KILLED, () -> {
+                check(statSlot("minecraft:player") < 0 && statSlot("minecraft:zombie") >= 0, "player-excluded-from-mobs-killed");
+                click(48); waitFor(() -> menu(Route.Mode.MAIN), () -> openCategory(Category.KILLED_BY, () -> {
+                    check(statSlot("minecraft:player") < 0 && statSlot("minecraft:zombie") >= 0, "player-excluded-from-killed-by-mobs");
+                    click(48); waitFor(() -> menu(Route.Mode.MAIN), this::server);
+                }));
+            }));
+        });
+    }
     private void server() {
         click(MenuLayout.CENTER);
         waitFor(() -> menu(Route.Mode.SERVER), () -> {
+            scopeBorder(Material.GOLD_INGOT, "server-scope");
+            check(!player.getOpenInventory().getTitle().contains("OfflineA"), "server-title-independent-of-personal-target");
+            check(holder().context().snapshot().keys().stream().noneMatch(StatKey::isPlayerEntity), "no-hidden-player-entity-medal-competitions");
             click(50);
             waitFor(() -> menu(Route.Mode.SERVER), () -> {
                 service.snapshot(true).whenComplete((snapshot, error) -> tasks.entity(player, () -> protect(() -> {
@@ -145,17 +224,17 @@ public final class ProbePlugin extends JavaPlugin implements Listener {
         });
     }
     private void leaderboard() {
-        check(type(0) == Material.STONE, "server-total-sorting");
-        String lore = lore(0);
-        check(lore.contains("2.600"), "online-file-replaced-with-live-value-once");
+        check(type(MenuLayout.contentSlot(0)) == Material.STONE, "server-total-sorting");
+        String lore = lore(MenuLayout.contentSlot(0));
+        check(lore.contains("2,600"), "online-file-replaced-with-live-value-once");
         check(lore.contains("OfflineA") && lore.contains("OfflineB") && lore.contains("OfflineC"), "offline-top-three");
         check(lore.contains("1. OfflineA") && lore.contains("1. OfflineB") && lore.contains("3. OfflineC"), "competition-ranks-1-1-3");
         check(lore.contains("4. StatsTester") && lore.contains("100"), "viewer-position-outside-top-three");
-        click(0);
-        waitFor(() -> menu(Route.Mode.RANKING) && textured(3), () -> {
-            check(name(0).contains("OfflineA") && name(1).contains("OfflineB"), "detail-player-ranking");
-            check(type(0) == Material.PLAYER_HEAD, "ranking-player-heads");
-            check(textured(3), "online-player-skin-retained-in-ranking");
+        click(MenuLayout.contentSlot(0));
+        waitFor(() -> menu(Route.Mode.RANKING) && textured(MenuLayout.contentSlot(3)), () -> {
+            check(name(MenuLayout.contentSlot(0)).contains("OfflineA") && name(MenuLayout.contentSlot(1)).contains("OfflineB"), "detail-player-ranking");
+            check(type(MenuLayout.contentSlot(0)) == Material.PLAYER_HEAD, "ranking-player-heads");
+            check(textured(MenuLayout.contentSlot(3)), "online-player-skin-retained-in-ranking");
             click(48);
             waitFor(() -> menu(Route.Mode.SERVER_CATEGORY), () -> {
                 click(48); waitFor(() -> menu(Route.Mode.SERVER), () -> {
@@ -180,13 +259,13 @@ public final class ProbePlugin extends JavaPlugin implements Listener {
         } catch (ReflectiveOperationException error) { throw new IllegalStateException(error); }
     }
     private void medals() {
-        check(type(0) == Material.PLAYER_HEAD && lore(0).contains("Gesamt:"), "medal-counts-and-player-heads");
+        check(type(MenuLayout.contentSlot(0)) == Material.PLAYER_HEAD && lore(MenuLayout.contentSlot(0)).contains("Total:"), "medal-counts-and-player-heads");
         check(type(53) == Material.PLAYER_HEAD, "medal-ranking-pagination");
         click(53);
         waitFor(() -> menu(Route.Mode.MEDALS) && holder().route().page() == 1, () -> {
-            click(0);
+            click(MenuLayout.contentSlot(0));
             waitFor(() -> menu(Route.Mode.PROFILE), () -> {
-                check(lore(0).contains("minecraft:"), "medal-profile-individual-statistics");
+                check(lore(MenuLayout.contentSlot(0)).contains("minecraft:"), "medal-profile-individual-statistics");
                 personalNameOnlyInTitle(holder().context().snapshot().players().get(holder().route().subject()).name(), "medal-profile");
                 player.performCommand("stats");
                 waitFor(() -> player.getOpenInventory().getTopInventory().getHolder() instanceof StatsHolder loading && loading.context() == null, () -> {

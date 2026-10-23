@@ -8,15 +8,18 @@ public record Route(Mode mode, Category category, StatKey key, UUID subject, int
     public static Route main() { return new Route(Mode.MAIN, null, null, null, 0, null); }
     public Route child(Mode mode, Category category, StatKey key, UUID subject) { return new Route(mode, category, key, subject, 0, this); }
     public Route page(int page) { return new Route(mode, category, key, subject, page, parent); }
+    public boolean serverView() {
+        return mode == Mode.SERVER || mode == Mode.SERVER_CATEGORY || mode == Mode.RANKING || mode == Mode.MEDALS;
+    }
     public String title() {
         return switch (mode) {
-            case MAIN -> "Statistiken";
-            case SERVER -> "Server-Bestenlisten";
+            case MAIN -> "Statistics";
+            case SERVER -> "Server leaderboards";
             case PERSONAL_CATEGORY -> category.shortName();
             case SERVER_CATEGORY -> "Server: " + category.shortName();
-            case RANKING -> "Einzelrangliste";
-            case MEDALS -> "Medaillen-Ranking";
-            case PROFILE -> "Medaillenprofil";
+            case RANKING -> "Leaderboard";
+            case MEDALS -> "Medal ranking";
+            case PROFILE -> "Medal profile";
         };
     }
 }

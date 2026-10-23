@@ -41,7 +41,7 @@ public final class PlayerDirectory {
             } else {
                 root.getAsJsonObject().entrySet().forEach(entry -> putName(new JsonPrimitive(entry.getKey()), entry.getValue()));
             }
-        } catch (IOException | RuntimeException error) { warnings.add("Namensdatei konnte nicht gelesen werden: " + path.getFileName()); }
+        } catch (IOException | RuntimeException error) { warnings.add("Could not read player name cache: " + path.getFileName()); }
     }
     private static boolean validName(String name) { return name != null && name.matches("[A-Za-z0-9_]{1,16}"); }
     private void putName(JsonElement uuid, JsonElement name) {
@@ -56,10 +56,10 @@ public final class PlayerDirectory {
             String name = offlineNames.apply(uuid);
             if (validName(name)) names.putIfAbsent(uuid, name);
         } catch (RuntimeException error) {
-            warnings.add("Spielername konnte nicht aufgelöst werden: " + uuid);
+            warnings.add("Could not resolve player name: " + uuid);
         }
     }
-    public String name(UUID uuid) { return names.getOrDefault(uuid, "Unbekannt (" + uuid.toString().substring(0, 8) + ")"); }
+    public String name(UUID uuid) { return names.getOrDefault(uuid, "Unknown (" + uuid.toString().substring(0, 8) + ")"); }
     public void publish(Set<UUID> uuids) {
         Map<UUID, String> copy = new HashMap<>(); uuids.forEach(uuid -> copy.put(uuid, name(uuid))); known = Map.copyOf(copy);
     }
