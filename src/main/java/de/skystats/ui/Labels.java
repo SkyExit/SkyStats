@@ -1,6 +1,7 @@
 package de.skystats.ui;
 
 import de.skystats.model.StatKey;
+import de.skystats.model.PlayerStats;
 import org.bukkit.Material;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -28,12 +29,14 @@ public final class Labels {
         } catch (IOException error) { throw new IllegalStateException("Cannot load labels", error); }
     }
     public String name(StatKey key) {
+        if (key.equals(PlayerStats.UNKNOWN_DEATHS)) return "Unknown / environmental deaths";
         Presentation presentation = custom.get(key.id());
         if (key.type().equals("minecraft:custom") && presentation != null) return presentation.name();
         String path = key.id().substring(key.id().indexOf(':') + 1).replace('_', ' ');
         return Character.toUpperCase(path.charAt(0)) + path.substring(1);
     }
     public Material icon(StatKey key) {
+        if (key.equals(PlayerStats.UNKNOWN_DEATHS)) return Material.FEATHER;
         if (key.type().equals("minecraft:custom")) {
             Presentation presentation = custom.get(key.id());
             if (presentation != null) return presentation.icon();
@@ -94,6 +97,7 @@ public final class Labels {
     }
     public boolean hasLabel(StatKey key) { return key.type().equals("minecraft:custom") && custom.containsKey(key.id()); }
     public boolean usesItemName(StatKey key) {
+        if (key.equals(PlayerStats.UNKNOWN_DEATHS)) return false;
         if (key.type().equals("minecraft:custom")) return false;
         String path = key.id().substring(key.id().indexOf(':') + 1);
         if (key.type().equals("minecraft:killed") || key.type().equals("minecraft:killed_by")) {

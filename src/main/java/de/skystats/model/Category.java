@@ -8,8 +8,8 @@ public enum Category {
     BROKEN("Items broken", "ANVIL", "Broken"),
     PICKED_UP("Items picked up", "HOPPER", "Picked up"),
     DROPPED("Items dropped", "DROPPER", "Dropped"),
-    KILLED("Mobs killed", "IRON_SWORD", "Killed"),
-    KILLED_BY("Killed by mobs", "SKELETON_SKULL", "Deaths caused"),
+    KILLED("Entities killed", "IRON_SWORD", "Killed"),
+    KILLED_BY("Deaths", "SKELETON_SKULL", "Deaths caused"),
     MOVEMENT("Movement", "LEATHER_BOOTS", "Distance"),
     PLAY_TIME("Play time", "CLOCK", "Time"),
     COMBAT("Combat", "SHIELD", "Value"),
@@ -27,7 +27,7 @@ public enum Category {
 
     public boolean contains(StatKey key) { return forKey(key) == this; }
 
-    /** Each statistic has exactly one category; player entities are never mob entries. */
+    /** Each statistic has exactly one category. */
     public static Category forKey(StatKey key) {
         return switch (key.type()) {
             case "minecraft:mined" -> MINED;
@@ -36,13 +36,14 @@ public enum Category {
             case "minecraft:broken" -> BROKEN;
             case "minecraft:picked_up" -> PICKED_UP;
             case "minecraft:dropped" -> DROPPED;
-            case "minecraft:killed" -> key.isPlayerEntity() ? null : KILLED;
-            case "minecraft:killed_by" -> key.isPlayerEntity() ? null : KILLED_BY;
+            case "minecraft:killed" -> KILLED;
+            case "minecraft:killed_by", "skystats:deaths" -> KILLED_BY;
             case "minecraft:custom" -> {
+                if (key.equals(PlayerStats.PLAYER_KILLS)) yield KILLED;
                 if (key.isDistance()) yield MOVEMENT;
                 if (key.isTime()) yield PLAY_TIME;
                 if (key.isDamage() || switch (key.id()) {
-                    case "minecraft:deaths", "minecraft:mob_kills", "minecraft:player_kills",
+                    case "minecraft:deaths", "minecraft:mob_kills",
                          "minecraft:raid_trigger", "minecraft:raid_win", "minecraft:target_hit" -> true;
                     default -> false;
                 }) yield COMBAT;

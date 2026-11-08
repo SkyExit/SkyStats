@@ -21,4 +21,13 @@ class UiRulesTest {
         assertFalse(Page.of(36, 1).hasNext()); assertTrue(Page.of(36, 1).hasPrevious());
     }
     @Test void englishLabelsAreLoadedWithNamespacedKeys() { assertEquals("Jumps", new Labels().name(new StatKey("minecraft:custom", "minecraft:jump"))); }
+    @Test void ratesAndSharesHandleMissingPlayTimeZeroTotalsAndFractionalUnits() {
+        StatKey count = new StatKey("minecraft:mined", "minecraft:stone");
+        assertEquals("25%", ValueFormatter.share(25, 100));
+        assertEquals("N/A (server total is zero)", ValueFormatter.share(0, 0));
+        assertEquals("0.5 / hour", ValueFormatter.hourly(count, 1, 144000));
+        assertEquals("N/A (no recorded play time)", ValueFormatter.hourly(count, 10, 0));
+        assertEquals("1.5 m / hour", ValueFormatter.hourly(new StatKey("minecraft:custom", "minecraft:walk_one_cm"), 150, 72000));
+        assertEquals("50% of play time", ValueFormatter.hourly(new StatKey("minecraft:custom", "minecraft:sneak_time"), 36000, 72000));
+    }
 }

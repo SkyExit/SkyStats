@@ -4,7 +4,25 @@ Vanilla statistics, leaderboards and medals in inventory menus for Paper and Fol
 All plugin text is English. Minecraft item and spawn-egg names use the player's
 client language. SkyStats reads existing statistics and never counts gameplay events.
 
-## v2.2.0-BETA
+## v2.3.0
+
+- Category footers show personal/server totals, your share of the server total and
+  values relative to recorded play time. Click a personal statistic for the same
+  comparison of that individual item. Comparisons are calculated only when opened.
+- Personal categories remain usable while server comparisons load in the background.
+  If the server comparison fails, personal values remain available.
+- Personal medal profiles sort by gold, silver and bronze, then by descending
+  statistic value. The bottom-right switch cycles to the first page of each medal type.
+- Click a player in any leaderboard to open their statistics. Back returns to the
+  same leaderboard and page, independently for every viewer. Medal profiles are
+  available from the personal main menu.
+- **Entities killed** includes player kills. **Deaths** includes deaths caused by
+  players and mobs, plus unknown/environmental deaths calculated from Vanilla totals.
+  Player kills have one canonical entry, so duplicate Vanilla representations do
+  not award duplicate medals.
+- The close button is an embedded red X head; Back uses a wooden arrow head.
+
+### Previous release: v2.2.0-BETA
 
 - Reviewed icons for every supported custom statistic: strider spawn egg, elytra,
   boat, minecart, mounts, workstations, combat, activities and timers.
@@ -30,19 +48,42 @@ client language. SkyStats reads existing statistics and never counts gameplay ev
 
 The main menu contains fourteen categories around the server-leaderboard button.
 The server menu uses the same layout with medal rankings in the center.
-Each inventory has 54 slots: 35 entries, ten side-border items, and nine navigation
-slots. Textured wooden arrow heads switch pages; Back and Refresh retain their
-positions. Player names appear in inventory titles, and in ranking entries where
-they identify competitors.
+Each inventory has 54 slots: 35 entries, ten side-border items, and nine footer
+slots. Category and statistic views reserve the bottom-left two slots for totals
+and play-time comparisons; their previous-page arrow moves to the third slot.
+Back/Close and Refresh retain their positions. Player names appear in inventory
+titles, and in ranking entries where they identify competitors.
 
 Personal categories sort by that player's values. Server categories sort by totals
 over all known UUIDs, including offline players, and show the top three plus your
-own position. Click a server statistic to open its full ranking. Medal profiles
-show the individual statistics behind a player's awards.
+own position. Click a server statistic to open its full ranking. Click a ranking
+entry to open that player's personal main menu; Back returns to the ranking page.
+The personal main menu's medal button shows the individual statistics behind
+that player's awards.
 
 Ties use competition ranks (`1, 1, 3`). Only positive values earn medals.
 Medal rankings sort by total awards, then gold, silver and bronze; equal medal
 counts share ranks. Each underlying statistic awards medals exactly once.
+
+## Totals, comparisons and deaths
+
+Category totals include every page. Count categories and movement use sums;
+Play time uses Time played, since timers overlap. Combat mixes damage, kills
+and raid counters, so it offers comparisons for individual statistics instead of
+adding incompatible units. Hourly server rates use the combined play time of all
+known players. Missing play time or a zero server total displays N/A.
+
+Server comparisons use a cached server snapshot. A freshly opened personal
+profile replaces that UUID's older snapshot values exactly once in its comparison.
+Refresh rereads personal values and requests a server update subject to the
+configured cooldown. Sorting and comparison work runs on data workers.
+
+Vanilla does not store separate historical fall, void, lava or similar death
+counts. **Unknown / environmental deaths** is the nonnegative difference between
+total deaths and all entity-attributed deaths, including player-caused deaths.
+Its tooltip explains this limitation. It has personal and server totals and a
+leaderboard like other statistics. No gameplay event tracking or writes to Vanilla
+statistics are introduced.
 
 ## Item uses and placements
 
@@ -66,7 +107,7 @@ sha512sum, and downloads Maven and dependencies into the ignored `.tools/` folde
 ./mvnw verify
 ```
 
-Install `target/SkyStats-2.2.0-BETA.jar` in the server's `plugins/` folder,
+Install `target/SkyStats-2.3.0.jar` in the server's `plugins/` folder,
 replacing the previous SkyStats JAR, and restart the server normally.
 No other plugins are required. Gson is shaded into an isolated package.
 The plugin compiles against Spigot 1.18.2 with Java 17 bytecode; newer public
@@ -78,7 +119,7 @@ scheduler and profile APIs are accessed through compatibility adapters.
 | Folia 26.3, build 3 | 25.0.3 | See TESTING.md |
 
 Earlier releases were also tested on Paper 1.18 build 66 and Paper 1.18.2 build 388.
-Those older servers have not been rerun for v2.2.0-BETA. Folia has no 1.18 release.
+Those older servers have not been rerun for v2.3.0. Folia has no 1.18 release.
 
 ## Configuration
 
@@ -107,8 +148,9 @@ The server-root `usercache.json` is read independently of the world container.
 ## Freshness and data handling
 
 Each personal opening or refresh rereads offline JSON or scans the online player's
-live statistics on their entity scheduler. Personal requests do not wait for other
-players or server leaderboards. Only an unresolved player name during initial
+live statistics on their entity scheduler. Personal requests and category entries
+do not wait for other players or server leaderboards; comparison footers load
+separately. Only an unresolved player name during initial
 indexing may need the first server scan to finish.
 
 Server snapshots are still cached, timestamped and protected by the configured
@@ -150,4 +192,5 @@ and contain deliberately generated statistics. They stop after testing.
 See [TESTING.md](TESTING.md) for results, coverage and local Windows commands.
 
 References: [Spigot Statistic API](https://hub.spigotmc.org/javadocs/spigot/org/bukkit/Statistic.html),
-[Paper/Folia scheduling](https://docs.papermc.io/paper/dev/folia-support/).
+[Paper/Folia scheduling](https://docs.papermc.io/paper/dev/folia-support/),
+[Red X head texture](https://minecraft-heads.com/custom-heads/head/9382-red-x).

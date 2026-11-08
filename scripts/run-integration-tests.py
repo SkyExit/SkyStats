@@ -58,6 +58,7 @@ def fixtures(server, version):
             cache.append({"uuid": ident, "name": name, "expiresOn": "2030-01-01 00:00:00 +0000"})
         stats = {"minecraft:mined": {"minecraft:stone": stone}, "minecraft:custom": {f"minecraft:probe_{index}": 1}}
         if name == "OfflineA":
+            stats["minecraft:custom"].update({"minecraft:deaths": 20, "minecraft:play_time": 72000})
             stats["minecraft:mined"].update({f"minecraft:probe_block_{i}": 1 for i in range(50)})
             stats["minecraft:killed"] = {"minecraft:player": 99, "minecraft:zombie": 5}
             stats["minecraft:killed_by"] = {"minecraft:player": 9, "minecraft:zombie": 2}

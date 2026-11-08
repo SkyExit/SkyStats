@@ -58,6 +58,12 @@ class HeadFactoryTest {
         }
         assertTrue(work.isEmpty());
     }
+    @Test void closeButtonUsesAnEmbeddedRedXWithoutProfileLookup() throws Exception {
+        heads.closeButton();
+        verify(profiles.get(0).getTextures()).setSkin(URI.create("https://textures.minecraft.net/texture/" + HeadFactory.CLOSE_TEXTURE).toURL());
+        verify(profiles.get(0), never()).update();
+        assertTrue(work.isEmpty());
+    }
 
     @Test void waitsForResolvedTexturesCoalescesRequestsAndPreservesStatisticsUuid() throws Exception {
         UUID uuid = UUID.nameUUIDFromBytes("OfflinePlayer:Tester".getBytes(java.nio.charset.StandardCharsets.UTF_8));

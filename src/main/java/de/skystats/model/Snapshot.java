@@ -29,7 +29,7 @@ public final class Snapshot {
         Map<StatKey, Long> totals = new HashMap<>();
         for (PlayerStats player : players.values()) {
             player.values().forEach((key, value) -> {
-                if (value > 0 && !key.isPlayerEntity()) {
+                if (value > 0) {
                     totals.merge(key, value, Snapshot::saturatedAdd);
                     competitors.computeIfAbsent(key, ignored -> new ArrayList<>()).add(player);
                 }

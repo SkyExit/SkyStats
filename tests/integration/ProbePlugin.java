@@ -74,6 +74,7 @@ public final class ProbePlugin extends JavaPlugin implements Listener {
             personalNameOnlyInTitle("StatsTester", "own-main");
             scopeBorder(Material.EMERALD, "own-scope");
             check(holder().context().snapshot() == null, "personal-menu-independent-of-server-snapshot");
+            check(type(48) == Material.PLAYER_HEAD && textured(48) && name(48).contains("Close"), "textured-red-x-close-button");
             Labels labels = new Labels();
             for (StatKey key : new StatCatalog().keys()) {
                 check(Arrays.stream(Category.values()).filter(category -> category.contains(key)).count() == 1, "runtime-category-" + key.technicalName(), false);
@@ -93,12 +94,20 @@ public final class ProbePlugin extends JavaPlugin implements Listener {
             attacks();
             networkAttacks(() -> {
             click(MenuLayout.slot(Category.MINED));
-            waitFor(() -> menu(Route.Mode.PERSONAL_CATEGORY), () -> {
+            waitFor(() -> menu(Route.Mode.PERSONAL_CATEGORY) && holder().context().comparison() != null, () -> {
                 check(holder().route().category() == Category.MINED, "mined-category-mapping");
                 check(type(MenuLayout.contentSlot(0)) == Material.STONE && lore(MenuLayout.contentSlot(0)).contains("100"), "live-values-and-personal-sorting");
+                check(type(45) == Material.CHEST && lore(45).contains("Personal total:") && lore(45).contains("Share of server:"), "lazy-category-totals-and-server-share");
+                check(type(46) == Material.CLOCK && lore(46).contains("/ hour"), "category-play-time-rates");
                 personalNameOnlyInTitle("StatsTester", "own-category");
+                click(MenuLayout.contentSlot(0));
+                waitFor(() -> menu(Route.Mode.STATISTIC) && holder().context().comparison() != null, () -> {
+                check(lore(45).contains("Personal total: 100") && lore(45).contains("Server total: 2,600"), "individual-item-comparison");
+                click(48); waitFor(() -> menu(Route.Mode.PERSONAL_CATEGORY), () -> {
                 click(48);
                 waitFor(() -> menu(Route.Mode.MAIN), this::updatedCategories);
+                });
+                });
             });
             });
         });
@@ -127,7 +136,7 @@ public final class ProbePlugin extends JavaPlugin implements Listener {
     }
     private void openCategory(Category category, Runnable next) {
         click(MenuLayout.slot(category));
-        waitFor(() -> menu(Route.Mode.PERSONAL_CATEGORY) && holder().route().category() == category, next);
+        waitFor(() -> menu(Route.Mode.PERSONAL_CATEGORY) && holder().route().category() == category && holder().context().comparison() != null, next);
     }
     private int statSlot(String id) {
         for (int i = 0; i < holder().rows().size() && i < Page.CONTENT_SIZE; i++) {
@@ -176,17 +185,18 @@ public final class ProbePlugin extends JavaPlugin implements Listener {
             personalNameOnlyInTitle("OfflineA", "offline-main");
             scopeBorder(Material.DIAMOND, "other-player-scope");
             click(MenuLayout.slot(Category.MINED));
-            waitFor(() -> menu(Route.Mode.PERSONAL_CATEGORY), () -> {
+            waitFor(() -> menu(Route.Mode.PERSONAL_CATEGORY) && holder().context().comparison() != null, () -> {
                 check(type(MenuLayout.contentSlot(0)) == Material.STONE && lore(MenuLayout.contentSlot(0)).contains("1,000"), "offline-file-value");
                 personalNameOnlyInTitle("OfflineA", "offline-category");
                 check(type(53) == Material.PLAYER_HEAD, "next-page-player-head");
                 check(textured(53), "next-head-texture");
                 click(53);
                 waitFor(() -> menu(Route.Mode.PERSONAL_CATEGORY) && holder().route().page() == 1, () -> {
-                    check(type(45) == Material.PLAYER_HEAD && textured(45), "previous-page-textured-head");
+                    check(type(47) == Material.PLAYER_HEAD && textured(47), "previous-page-textured-head");
+                    check(lore(45).contains("Personal total: 1,050"), "category-total-includes-every-page");
                     check(name(49).contains("2 / 2"), "page-counter");
                     personalNameOnlyInTitle("OfflineA", "offline-category-second-page");
-                    click(45);
+                    click(47);
                     waitFor(() -> menu(Route.Mode.PERSONAL_CATEGORY) && holder().route().page() == 0, () -> {
                     click(48); waitFor(() -> menu(Route.Mode.MAIN), this::offlineDetails);
                     });
@@ -199,9 +209,12 @@ public final class ProbePlugin extends JavaPlugin implements Listener {
             check(lore(statSlot("minecraft:time_since_rest")).contains("0d 0h 0m 0s"), "zero-rest-timer-visible");
             check(lore(statSlot("minecraft:time_since_death")).contains("0d 0h 0m 0s"), "zero-death-timer-visible");
             click(48); waitFor(() -> menu(Route.Mode.MAIN), () -> openCategory(Category.KILLED, () -> {
-                check(statSlot("minecraft:player") < 0 && statSlot("minecraft:zombie") >= 0, "player-excluded-from-mobs-killed");
+                check(statSlot("minecraft:player_kills") >= 0 && statSlot("minecraft:zombie") >= 0, "player-kills-and-mob-kills");
+                check(lore(45).contains("Personal total: 104"), "player-kills-counted-once");
                 click(48); waitFor(() -> menu(Route.Mode.MAIN), () -> openCategory(Category.KILLED_BY, () -> {
-                    check(statSlot("minecraft:player") < 0 && statSlot("minecraft:zombie") >= 0, "player-excluded-from-killed-by-mobs");
+                    check(statSlot("minecraft:player") >= 0 && statSlot("minecraft:zombie") >= 0, "player-and-mob-caused-deaths");
+                    check(lore(statSlot("skystats:unknown")).contains("9") && lore(statSlot("skystats:unknown")).contains("falls, void"), "unknown-environmental-death-residual");
+                    check(lore(45).contains("Personal total: 20"), "death-category-total");
                     click(48); waitFor(() -> menu(Route.Mode.MAIN), this::server);
                 }));
             }));
@@ -212,7 +225,9 @@ public final class ProbePlugin extends JavaPlugin implements Listener {
         waitFor(() -> menu(Route.Mode.SERVER), () -> {
             scopeBorder(Material.GOLD_INGOT, "server-scope");
             check(!player.getOpenInventory().getTitle().contains("OfflineA"), "server-title-independent-of-personal-target");
-            check(holder().context().snapshot().keys().stream().noneMatch(StatKey::isPlayerEntity), "no-hidden-player-entity-medal-competitions");
+            check(holder().context().snapshot().total(new StatKey("minecraft:killed_by", "minecraft:player")) >= 9, "server-player-death-rankings");
+            check(holder().context().snapshot().total(PlayerStats.PLAYER_KILLS) >= 99, "server-player-kill-rankings");
+            check(holder().context().snapshot().ranking(new StatKey("minecraft:killed", "minecraft:player")).isEmpty(), "no-duplicate-player-kill-competition");
             click(50);
             waitFor(() -> menu(Route.Mode.SERVER), () -> {
                 service.snapshot(true).whenComplete((snapshot, error) -> tasks.entity(player, () -> protect(() -> {
@@ -235,11 +250,19 @@ public final class ProbePlugin extends JavaPlugin implements Listener {
             check(name(MenuLayout.contentSlot(0)).contains("OfflineA") && name(MenuLayout.contentSlot(1)).contains("OfflineB"), "detail-player-ranking");
             check(type(MenuLayout.contentSlot(0)) == Material.PLAYER_HEAD, "ranking-player-heads");
             check(textured(MenuLayout.contentSlot(3)), "online-player-skin-retained-in-ranking");
+            Route origin = holder().route();
+            click(MenuLayout.contentSlot(0));
+            waitFor(() -> menu(Route.Mode.MAIN) && holder().context().target().name().equals("OfflineA"), () -> {
+            check(holder().context().returnTo() != null, "leaderboard-click-opens-personal-player-profile");
+            click(48); waitFor(() -> menu(Route.Mode.RANKING), () -> {
+            check(holder().route().equals(origin), "player-profile-back-to-same-leaderboard");
             click(48);
             waitFor(() -> menu(Route.Mode.SERVER_CATEGORY), () -> {
                 click(48); waitFor(() -> menu(Route.Mode.SERVER), () -> {
                     click(MenuLayout.CENTER); waitFor(() -> menu(Route.Mode.MEDALS), this::medals);
                 });
+            });
+            });
             });
         });
     }
@@ -263,10 +286,20 @@ public final class ProbePlugin extends JavaPlugin implements Listener {
         check(type(53) == Material.PLAYER_HEAD, "medal-ranking-pagination");
         click(53);
         waitFor(() -> menu(Route.Mode.MEDALS) && holder().route().page() == 1, () -> {
+            Route origin = holder().route();
+            UUID subject = ((Snapshot.Medals) holder().rows().get(Page.CONTENT_SIZE)).uuid();
             click(MenuLayout.contentSlot(0));
+            waitFor(() -> menu(Route.Mode.MAIN) && holder().context().target().uuid().equals(subject), () -> {
+            click(48); waitFor(() -> menu(Route.Mode.MEDALS), () -> {
+            check(holder().route().equals(origin), "medal-player-profile-back-to-same-page");
+            click(MenuLayout.contentSlot(0)); waitFor(() -> menu(Route.Mode.MAIN), () -> {
+            click(52);
             waitFor(() -> menu(Route.Mode.PROFILE), () -> {
                 check(lore(MenuLayout.contentSlot(0)).contains("minecraft:"), "medal-profile-individual-statistics");
+                check(holder().rows().get(0) instanceof MedalAward, "private-medal-sorted-awards");
                 personalNameOnlyInTitle(holder().context().snapshot().players().get(holder().route().subject()).name(), "medal-profile");
+                check(holder().action(52) != null, "medal-tier-jump-switch");
+                click(52); waitFor(() -> menu(Route.Mode.PROFILE) && holder().route().medalTier() > 0, () -> {
                 player.performCommand("stats");
                 waitFor(() -> player.getOpenInventory().getTopInventory().getHolder() instanceof StatsHolder loading && loading.context() == null, () -> {
                 player.closeInventory();
@@ -280,6 +313,10 @@ public final class ProbePlugin extends JavaPlugin implements Listener {
                     });
                 }), () -> fail("Player retired"), 80);
                 });
+                });
+            });
+            });
+            });
             });
         });
     }

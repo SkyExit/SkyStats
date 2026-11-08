@@ -6,7 +6,13 @@ import org.bukkit.inventory.InventoryHolder;
 import java.util.*;
 
 public final class StatsHolder implements InventoryHolder {
-    public record Context(Snapshot snapshot, PlayerStats target) {}
+    public record ReturnPoint(Route route, Context context) {}
+    public record Context(Snapshot snapshot, PlayerStats target, ReturnPoint returnTo, StatComparison comparison) {
+        public Context(Snapshot snapshot, PlayerStats target) { this(snapshot, target, null, null); }
+        public Context withSnapshot(Snapshot value) { return new Context(value, target, returnTo, null); }
+        public Context withTarget(PlayerStats value) { return new Context(snapshot, value, returnTo, null); }
+        public Context withComparison(StatComparison value) { return new Context(snapshot, target, returnTo, value); }
+    }
     private final UUID viewer;
     private final Route route;
     private final Context context;

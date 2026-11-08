@@ -1,12 +1,12 @@
 # Verification
 
-v2.2.0-BETA, 23 October 2026: **83 automated tests passed** and the complete
+v2.3.0, 8 November 2026: **99 automated tests passed** and the complete
 integration suite passed on both current local server instances:
 
 | Server | Runtime | Result | Largest observed entity-tick interval |
 | --- | --- | --- | --- |
-| Paper 26.3 build 190 | Java 25.0.3 | PASS | 130 ms |
-| Folia 26.3 build 3 | Java 25.0.3 | PASS | 153 ms |
+| Paper 26.3 build 190 | Java 25.0.3 | PASS | 189 ms |
+| Folia 26.3 build 3 | Java 25.0.3 | PASS | 150 ms |
 
 These intervals include world and profile processing across the complete local
 test server. They are observations, not an isolated plugin benchmark.
@@ -34,8 +34,19 @@ repeated for this version.
   without their own inventory form.
 - Item uses and placements are disjoint, including seeds, redstone, tools, boats,
   buckets and edible planting items.
-- All time counters belong to Play time. Player entities are excluded from both
-  mob categories and cannot create hidden medal competitions.
+- All time counters belong to Play time. Player kills and player-caused deaths
+  have personal/server entries, with duplicate player-kill representations normalized
+  into one competition. Unknown/environmental deaths use a clamped Vanilla residual.
+- Category totals span all pages, replace a fresh personal sample exactly once,
+  handle new players and overflow, and avoid adding incompatible units or overlapping timers.
+- Individual comparisons, percentages and hourly rates, including missing play time
+  and zero server totals. Personal categories remain usable during pending/failed comparisons.
+- Private medals sort by medal tier and descending value; tier switches work even
+  when multiple tiers begin on one page.
+- Two viewers retain independent leaderboard return routes and page numbers,
+  including after nested category navigation and personal refresh. Profile clicks
+  respect permissions; closed menus reject late profile results.
+- Embedded red X close heads require no remote profile lookup.
 - English number/time/distance/damage formatting, 35-entry pagination, reserved
   side borders, navigation slots and scope selection.
 - Every Bukkit click type and inventory action, drag events and creative events.
@@ -50,8 +61,7 @@ mvn -o -B "-Daether.enhancedLocalRepository.trackingFilename=skystats-local.repo
 
 The tracking-filename override accommodates dependencies originally cached with a
 different repository identity. It does not modify source dependencies.
-The final build ran outside the sandbox after Windows denied an atomic file
-replacement in a temporary name-cache test.
+The v2.3.0 build and all unit tests completed in the restricted execution environment.
 
 ## Real servers and network transactions
 
@@ -85,16 +95,21 @@ The current suite verifies:
 6. Time since last death/rest, including absent offline counters displayed at zero.
 7. Offline lookup through saved Bukkit player data, diamond borders, fresh file values,
    both pages of navigation and textured wooden arrow heads.
-8. Both mob categories exclude players; server snapshots contain no hidden player-entity
-   medal competitions.
+8. Player kills and player-caused deaths appear in personal/server statistics.
+   Duplicate player kills are counted once; the unknown/environmental death residual
+   and category totals match the supplied Vanilla fixtures.
 9. Gold-ingot server borders, titles independent of the previously viewed player,
    offline totals and online values replacing old disk data exactly once.
 10. Competition ranks `1, 1, 3`, top-three lore, the viewer's own position, complete
-    rankings, retained login skins, paginated medals and individual medal profiles.
+    rankings, retained login skins, paginated medals, individual medal profiles
+    and the medal-tier jump switch. Ranking clicks open personal profiles, and Back
+    restores both statistic rankings and the exact medal-ranking page.
 11. Names appear only in the title of personal/profile views, with ranking entries
     intentionally identifying their competitors.
 12. Closing a loading menu prevents delayed reopening; unknown-player messages,
     offline tab completion and invalid-file warnings remain functional.
+13. Category and individual-item totals, server shares, play-time comparisons,
+    totals across pagination, and the textured red X close button.
 
 The sandbox blocks even Java's internal loopback connections. Server integration
 therefore ran outside it. Warnings about deliberately corrupt fixture files are expected.
@@ -102,11 +117,12 @@ Synthetic offline identities can also produce cosmetic profile-service warnings.
 
 ## Evidence and artifacts
 
-- `target/verify.log`: final Maven output.
+- `target/verify-2.3.0.log`: final Maven output.
 - `target/surefire-reports/`: individual unit-test results.
 - `target/integration-results.txt`: both successful server reports.
+- `target/integration-2.3.0.log`: integration runner output.
 - Per server: `probe-result.txt`, `integration-console.log`, `integration-client.log`.
-- `target/SkyStats-2.2.0-BETA.jar`: installable plugin.
+- `target/SkyStats-2.3.0.jar`: installable plugin.
 
 All runtime downloads, test worlds and reports are ignored by Git.
 Avoid `clean` when retaining the existing `target/test-servers/` instances;

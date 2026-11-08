@@ -17,6 +17,8 @@ public final class HeadFactory implements AutoCloseable {
     // Minecraft Heads: Oak Wood Arrow Left / Right, IDs 2762 / 2763.
     public static final String LEFT_TEXTURE = "f7aacad193e2226971ed95302dba433438be4644fbab5ebf818054061667fbe2";
     public static final String RIGHT_TEXTURE = "d34ef0638537222b20f480694dadc0f85fbe0759d581aa7fcdf2e43139377158";
+    // Minecraft Heads: Red X, ID 9382.
+    public static final String CLOSE_TEXTURE = "beb588b21a6f98ad1ff4e085c552dcb050efc9cab427f46048f18fc803475f7";
     private record Identity(UUID uuid, String name) {}
     private static final class Cached {
         final CompletableFuture<Object> profile = new CompletableFuture<>();
@@ -69,7 +71,10 @@ public final class HeadFactory implements AutoCloseable {
     }
 
     public ItemStack arrow(boolean right) {
-        String texture = right ? RIGHT_TEXTURE : LEFT_TEXTURE;
+        return texturedHead(right ? RIGHT_TEXTURE : LEFT_TEXTURE);
+    }
+    public ItemStack closeButton() { return texturedHead(CLOSE_TEXTURE); }
+    private ItemStack texturedHead(String texture) {
         try {
             // The texture and its stable UUID are sufficient; no invented player name.
             Object profile = createProfile.invoke(null, UUID.nameUUIDFromBytes(texture.getBytes(StandardCharsets.UTF_8)), null);
@@ -83,7 +88,7 @@ public final class HeadFactory implements AutoCloseable {
                 profileType.getMethod("setProperty", property).invoke(profile, property.getConstructor(String.class, String.class).newInstance("textures", value));
             }
             return head(profile);
-        } catch (ReflectiveOperationException | java.net.MalformedURLException error) { throw new IllegalStateException("Cannot create arrow head", error); }
+        } catch (ReflectiveOperationException | java.net.MalformedURLException error) { throw new IllegalStateException("Cannot create navigation head", error); }
     }
 
     /** Called on the player's entity thread; logged-in skins need no remote lookup. */

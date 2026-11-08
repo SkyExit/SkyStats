@@ -40,15 +40,18 @@ class StatisticPresentationTest {
         assertEquals(List.of(), missing);
     }
 
-    @Test void allTimeStatisticsIncludeRestAndDeathAndPlayerEntitiesAreExcluded() {
+    @Test void allTimeStatisticsIncludeRestAndDeathAndPlayerEntitiesAreIncluded() {
         for (String id : List.of("play_time", "total_world_time", "time_since_death", "time_since_rest", "sneak_time")) {
             assertTrue(Category.PLAY_TIME.contains(key("custom", id)), id);
         }
         for (String type : List.of("killed", "killed_by")) {
-            assertNull(Category.forKey(key(type, "player")));
-            assertTrue(Arrays.stream(Category.values()).noneMatch(category -> category.contains(key(type, "player"))));
+            assertEquals(1, Arrays.stream(Category.values()).filter(category -> category.contains(key(type, "player"))).count());
         }
-        assertTrue(Category.COMBAT.contains(key("custom", "player_kills")));
+        assertTrue(Category.KILLED.contains(key("custom", "player_kills")));
+        assertTrue(Category.KILLED_BY.contains(PlayerStats.UNKNOWN_DEATHS));
+        assertEquals("Unknown / environmental deaths", labels.name(PlayerStats.UNKNOWN_DEATHS));
+        assertEquals(Material.FEATHER, labels.icon(PlayerStats.UNKNOWN_DEATHS));
+        assertFalse(new StatCatalog().keys().contains(key("killed", "player")));
     }
 
     @Test void iconsRepresentMovementInteractionsEntitiesAndNonItemBlocks() {

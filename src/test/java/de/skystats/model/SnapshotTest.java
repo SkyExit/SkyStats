@@ -49,14 +49,16 @@ class SnapshotTest {
         assertTrue(Category.MOVEMENT.contains(WALK));
         assertEquals(1, result.medals().get(0).total());
     }
-    @Test void playerEntitiesNeverCreateHiddenMobCompetitions() {
+    @Test void playerKillsAreCanonicalizedAndPlayerDeathsHaveServerRankings() {
         StatKey killed = new StatKey("minecraft:killed", "minecraft:player");
         StatKey killedBy = new StatKey("minecraft:killed_by", "minecraft:player");
         StatKey playerKills = new StatKey("minecraft:custom", "minecraft:player_kills");
         Snapshot result = snapshot(player("Anna", Map.of(killed, 5L, killedBy, 10L, playerKills, 5L)));
-        assertEquals(Set.of(playerKills), result.keys());
+        assertEquals(Set.of(playerKills, killedBy), result.keys());
         assertTrue(result.ranking(killed).isEmpty());
-        assertEquals(1, result.medals().get(0).total());
+        assertEquals(5, result.total(playerKills));
+        assertEquals(10, result.total(killedBy));
+        assertEquals(2, result.medals().get(0).total());
     }
     @Test void usesLongTotalsAndSaturatesInsteadOfOverflowing() {
         assertEquals(4_000_000_000L, snapshot(player("A", Map.of(STONE, 2_000_000_000L)), player("B", Map.of(STONE, 2_000_000_000L))).total(STONE));
