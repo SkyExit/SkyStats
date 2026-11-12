@@ -4,7 +4,12 @@ Vanilla statistics, leaderboards and medals in inventory menus for Paper and Fol
 All plugin text is English. Minecraft item and spawn-egg names use the player's
 client language. SkyStats reads existing statistics and never counts gameplay events.
 
-## v2.3.0
+## v2.3.1
+
+- Click a player in the medal ranking to see their individual awards. Back returns
+  to the same medal ranking page.
+
+### Previous release v2.3.0
 
 - Category footers show personal/server totals, your share of the server total and
   values relative to recorded play time. Click a personal statistic for the same
@@ -56,10 +61,10 @@ titles, and in ranking entries where they identify competitors.
 
 Personal categories sort by that player's values. Server categories sort by totals
 over all known UUIDs, including offline players, and show the top three plus your
-own position. Click a server statistic to open its full ranking. Click a ranking
-entry to open that player's personal main menu; Back returns to the ranking page.
-The personal main menu's medal button shows the individual statistics behind
-that player's awards.
+own position. Click a server statistic to open its full ranking. Click a statistic
+ranking entry to open that player's personal main menu. Click a medal ranking
+entry or the personal main menu's medal button to see that player's individual
+awards. Back returns to the page where you opened the view.
 
 Ties use competition ranks (`1, 1, 3`). Only positive values earn medals.
 Medal rankings sort by total awards, then gold, silver and bronze; equal medal
@@ -107,7 +112,7 @@ sha512sum, and downloads Maven and dependencies into the ignored `.tools/` folde
 ./mvnw verify
 ```
 
-Install `target/SkyStats-2.3.0.jar` in the server's `plugins/` folder,
+Install `target/SkyStats-2.3.1.jar` in the server's `plugins/` folder,
 replacing the previous SkyStats JAR, and restart the server normally.
 No other plugins are required. Gson is shaded into an isolated package.
 The plugin compiles against Spigot 1.18.2 with Java 17 bytecode; newer public

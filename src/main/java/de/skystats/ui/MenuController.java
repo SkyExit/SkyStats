@@ -128,11 +128,14 @@ public final class MenuController {
                 || route.mode() == Route.Mode.STATISTIC || route.mode() == Route.Mode.RANKING;
     }
 
+    private boolean canViewPlayer(Player viewer, UUID uuid) {
+        if (uuid.equals(viewer.getUniqueId()) || viewer.hasPermission("stats.others")) return true;
+        viewer.sendMessage("§cYou do not have permission to view other players' statistics.");
+        return false;
+    }
+
     private void openPlayer(Player viewer, StatsHolder origin, UUID uuid) {
-        if (!uuid.equals(viewer.getUniqueId()) && !viewer.hasPermission("stats.others")) {
-            viewer.sendMessage("§cYou do not have permission to view other players' statistics.");
-            return;
-        }
+        if (!canViewPlayer(viewer, uuid)) return;
         StatsHolder.ReturnPoint returnTo = new StatsHolder.ReturnPoint(origin.route(), origin.context());
         StatsHolder.Context pending = new StatsHolder.Context(null, origin.context().target(), returnTo, null);
         StatsHolder loading = loading(viewer, Route.main(), pending);
@@ -274,8 +277,12 @@ public final class MenuController {
             holder.action(slot, () -> openPlayer(viewer, holder, player.uuid()));
         } else if (row instanceof Snapshot.Medals medals) {
             playerHead(viewer, holder, slot, medals.uuid(), medals.name(), "§b#" + medals.rank() + " " + medals.name(),
-                    List.of("§fTotal: " + ValueFormatter.number(medals.total()), "§6Gold: " + medals.gold(), "§7Silver: " + medals.silver(), "§cBronze: " + medals.bronze(), "§eClick for player statistics", "§8" + medals.uuid()));
-            holder.action(slot, () -> openPlayer(viewer, holder, medals.uuid()));
+                    List.of("§fTotal: " + ValueFormatter.number(medals.total()), "§6Gold: " + medals.gold(), "§7Silver: " + medals.silver(), "§cBronze: " + medals.bronze(), "§eClick for individual medals", "§8" + medals.uuid()));
+            holder.action(slot, () -> {
+                if (canViewPlayer(viewer, medals.uuid())) {
+                    navigate(viewer, route.child(Route.Mode.PROFILE, null, null, medals.uuid()), context);
+                }
+            });
         } else if (row instanceof MedalAward award) {
             button(holder, slot, decorate(new ItemStack(labels.icon(award.key())), labels.usesItemName(award.key()) ? null : "§b" + labels.name(award.key()),
                     List.of(medalColor(award.placement().rank()) + medalName(award.placement().rank()), "§7Value: " + ValueFormatter.format(award.key(), award.placement().value()), "§8" + award.key().technicalName(), "§eClick for full leaderboard")),

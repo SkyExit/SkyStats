@@ -289,35 +289,35 @@ public final class ProbePlugin extends JavaPlugin implements Listener {
             Route origin = holder().route();
             UUID subject = ((Snapshot.Medals) holder().rows().get(Page.CONTENT_SIZE)).uuid();
             click(MenuLayout.contentSlot(0));
-            waitFor(() -> menu(Route.Mode.MAIN) && holder().context().target().uuid().equals(subject), () -> {
-            click(48); waitFor(() -> menu(Route.Mode.MEDALS), () -> {
-            check(holder().route().equals(origin), "medal-player-profile-back-to-same-page");
-            click(MenuLayout.contentSlot(0)); waitFor(() -> menu(Route.Mode.MAIN), () -> {
-            click(52);
-            waitFor(() -> menu(Route.Mode.PROFILE), () -> {
+            waitFor(() -> menu(Route.Mode.PROFILE) && subject.equals(holder().route().subject()), () -> {
                 check(lore(MenuLayout.contentSlot(0)).contains("minecraft:"), "medal-profile-individual-statistics");
-                check(holder().rows().get(0) instanceof MedalAward, "private-medal-sorted-awards");
-                personalNameOnlyInTitle(holder().context().snapshot().players().get(holder().route().subject()).name(), "medal-profile");
+                check(holder().rows().get(0) instanceof MedalAward award && award.placement().uuid().equals(subject), "medal-profile-selected-player-awards");
+                personalNameOnlyInTitle(holder().context().snapshot().players().get(subject).name(), "medal-profile");
                 check(holder().action(52) != null, "medal-tier-jump-switch");
-                click(52); waitFor(() -> menu(Route.Mode.PROFILE) && holder().route().medalTier() > 0, () -> {
-                player.performCommand("stats");
-                waitFor(() -> player.getOpenInventory().getTopInventory().getHolder() instanceof StatsHolder loading && loading.context() == null, () -> {
-                player.closeInventory();
-                tasks.entityLater(player, () -> protect(() -> {
-                    check(!(player.getOpenInventory().getTopInventory().getHolder() instanceof StatsHolder), "closed-menu-not-reopened-by-delayed-load");
-                    player.performCommand("stats NoSuchPlayer123");
-                    waitFor(() -> player.getOpenInventory().getTopInventory().getItem(22) != null && type(22) == Material.BARRIER, () -> {
-                        passed.add("unknown-player-message");
-                        check(service.names().complete("Off").contains("OfflineA"), "offline-tab-completion");
-                        finish();
+                click(52);
+                waitFor(() -> menu(Route.Mode.PROFILE) && holder().route().medalTier() > 0, () -> {
+                    click(48);
+                    waitFor(() -> menu(Route.Mode.MEDALS), () -> {
+                        check(holder().route().equals(origin), "medal-player-profile-back-to-same-page");
+                        closedLoadingMenu();
                     });
-                }), () -> fail("Player retired"), 80);
-                });
                 });
             });
-            });
-            });
-            });
+        });
+    }
+    private void closedLoadingMenu() {
+        player.performCommand("stats");
+        waitFor(() -> player.getOpenInventory().getTopInventory().getHolder() instanceof StatsHolder loading && loading.context() == null, () -> {
+            player.closeInventory();
+            tasks.entityLater(player, () -> protect(() -> {
+                check(!(player.getOpenInventory().getTopInventory().getHolder() instanceof StatsHolder), "closed-menu-not-reopened-by-delayed-load");
+                player.performCommand("stats NoSuchPlayer123");
+                waitFor(() -> player.getOpenInventory().getTopInventory().getItem(22) != null && type(22) == Material.BARRIER, () -> {
+                    passed.add("unknown-player-message");
+                    check(service.names().complete("Off").contains("OfflineA"), "offline-tab-completion");
+                    finish();
+                });
+            }), () -> fail("Player retired"), 80);
         });
     }
     private void personalNameOnlyInTitle(String target, String label) {

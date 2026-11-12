@@ -131,12 +131,31 @@ class MenuControllerTest {
             assertEquals(0, holder(player).route().page());
         }
     }
-    @Test void medalLeaderboardAlsoOpensTheSelectedPlayersStatistics() {
+    @Test void medalLeaderboardOpensIndividualAwardsAndReturnsToTheSamePage() {
+        StatKey diamond = new StatKey("minecraft:mined", "minecraft:diamond_ore");
+        profiles.replaceAll((uuid, stats) -> new PlayerStats(uuid, stats.name(), Map.of(STONE, stats.value(STONE), diamond, 10L)));
+        useSnapshot(Snapshot.aggregate(profiles, List.of()));
         Player player = viewer(); menus.command(player, null); click(player, MenuLayout.CENTER); click(player, MenuLayout.CENTER);
-        Snapshot.Medals row = (Snapshot.Medals) holder(player).rows().get(0);
-        click(player, MenuLayout.contentSlot(0));
-        assertEquals(Route.Mode.MAIN, holder(player).route().mode()); assertEquals(row.uuid(), holder(player).context().target().uuid());
-        click(player, 48); assertEquals(Route.Mode.MEDALS, holder(player).route().mode());
+        click(player, 53);
+        StatsHolder ranking = holder(player);
+        assertEquals(1, ranking.route().page());
+        Snapshot.Medals row = (Snapshot.Medals) ranking.rows().get(Page.CONTENT_SIZE);
+        int firstSlot = MenuLayout.contentSlot(0);
+
+        when(player.hasPermission("stats.others")).thenReturn(false);
+        click(player, firstSlot);
+        assertSame(ranking, holder(player));
+        when(player.hasPermission("stats.others")).thenReturn(true);
+
+        click(player, firstSlot);
+        StatsHolder profile = holder(player);
+        assertEquals(Route.Mode.PROFILE, profile.route().mode());
+        assertEquals(row.uuid(), profile.route().subject());
+        assertEquals(List.of(new MedalAward(diamond, new Snapshot.RankedPlayer(row.uuid(), row.name(), 10L, 1))), profile.rows());
+        verify(service, never()).personal(row.uuid());
+
+        click(player, 48);
+        assertEquals(ranking.route(), holder(player).route());
     }
     @Test void personalCategoriesStayUsableWhileServerComparisonIsPendingOrFails() {
         Player player = viewer(); CompletableFuture<Snapshot> pending = new CompletableFuture<>();
