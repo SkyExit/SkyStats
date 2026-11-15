@@ -1,0 +1,2 @@
+- Click a player in the server medal ranking to open their individual medal profile directly.
+- Use Back from that profile to return to the same page of the medal ranking.
